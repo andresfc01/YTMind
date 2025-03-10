@@ -1,0 +1,125 @@
+@import "tailwindcss";
+
+@theme {
+  --background-primary: oklch(0.13 0.003 260); /* #202123 */
+  --background-secondary: oklch(0.23 0.004 270); /* #343541 */
+  --background-tertiary: oklch(0.3 0.005 280); /* #444654 */
+
+  --text-primary: oklch(0.94 0.002 270); /* #ECECF1 */
+  --text-secondary: oklch(0.6 0.004 270); /* #8E8EA0 */
+  --text-disabled: oklch(0.38 0.005 270); /* #565869 */
+
+  --brand-primary: oklch(0.55 0.15 160); /* #10A37F */
+  --brand-hover: oklch(0.5 0.13 160); /* #0E8F6F */
+}
+
+/* Scrollbar styling */
+@utility scrollbarthin {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(217, 217, 227, 0.2) transparent;
+}
+
+/* Regular CSS for pseudo-elements that can't be utilities */
+.scrollbarthin::-webkit-scrollbar {
+  width: 3px;
+  height: 3px;
+}
+
+.scrollbarthin::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.scrollbarthin::-webkit-scrollbar-thumb {
+  background-color: rgba(217, 217, 227, 0.2);
+  border-radius: 3px;
+}
+
+.scrollbarthin::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(217, 217, 227, 0.3);
+}
+
+/* Base styles */
+body {
+  font-family: "Söhne", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell,
+    "Helvetica Neue", sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+/* Animations */
+@keyframes blink {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0;
+  }
+}
+
+@utility animateblink {
+  animation: blink 0.7s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.4;
+  }
+}
+
+@utility animatepulsefast {
+  animation: pulse 1s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* Markdown content styling */
+@utility prose {
+  max-width: none;
+}
+
+/* Regular CSS for elements that can't be utilities */
+.prose pre {
+  background-color: oklch(var(--background-tertiary));
+  border-radius: 0.375rem;
+  margin: 1rem 0;
+  padding: 1rem;
+  overflow-x: auto;
+}
+
+.prose code {
+  background-color: rgba(255, 255, 255, 0.1);
+  border-radius: 0.25rem;
+  padding: 0.125rem 0.25rem;
+  font-family: "Söhne Mono", Monaco, "Andale Mono", "Ubuntu Mono", monospace;
+  font-size: 0.875em;
+}
+
+.prose pre code {
+  background-color: transparent;
+  padding: 0;
+  border-radius: 0;
+  color: inherit;
+}
+
+/* Focus styles */
+*:focus-visible {
+  outline: 2px solid oklch(var(--brand-primary));
+  outline-offset: 2px;
+}
+
+/* Transition utilities */
+@utility transitionall200 {
+  transition: all 200ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@utility transitiontransform200 {
+  transition: transform 200ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@utility transitionopacity200 {
+  transition: opacity 200ms cubic-bezier(0.4, 0, 0.2, 1);
+}

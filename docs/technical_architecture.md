@@ -49,6 +49,7 @@ YTMind follows a modern web application architecture with the following componen
      - Documents: Store uploaded knowledge base documents
 
 4. **AI Services**
+
    - Primary: Gemini 2.0 Flash
    - Support for switching between different models
    - Specialized agents with different prompts/configurations
@@ -61,15 +62,18 @@ YTMind follows a modern web application architecture with the following componen
 {
   _id: ObjectId,
   title: String,
+  agentId: ObjectId, // Reference to the agent used (optional, can be null)
   messages: [
     {
       role: String, // 'user' or 'assistant'
       content: String,
-      timestamp: Date
+      timestamp: Date,
+      usedAgentId: ObjectId // Reference to agent used for this specific message (optional)
     }
   ],
   createdAt: Date,
-  updatedAt: Date
+  updatedAt: Date,
+  model: String // AI model used for this chat
 }
 ```
 
@@ -82,8 +86,24 @@ YTMind follows a modern web application architecture with the following componen
   description: String,
   systemPrompt: String,
   model: String, // e.g., 'gemini-2.0-flash'
+  functions: [
+    {
+      name: String,
+      description: String,
+      parameters: Object // JSON Schema for function parameters
+    }
+  ],
+  usesAgents: [
+    {
+      agentId: ObjectId, // Reference to another agent this agent can use
+      purpose: String // Description of when/why this agent is used
+    }
+  ],
+  icon: String, // Icon identifier
+  category: String, // e.g., 'analysis', 'content', 'seo'
   createdAt: Date,
-  updatedAt: Date
+  updatedAt: Date,
+  isDefault: Boolean // Whether this is a default agent
 }
 ```
 
@@ -95,14 +115,47 @@ YTMind follows a modern web application architecture with the following componen
   channelId: String, // YouTube channel ID
   name: String,
   description: String,
-  videoCount: Number,
-  mainTopics: [String],
-  publicationFrequency: Number, // videos per month
-  startDate: Date,
-  popularVideos: [{ videoId: String, title: String, views: Number }],
-  visualStyle: String,
-  communicationStyle: String,
-  analyzedAt: Date
+  statistics: {
+    videoCount: Number,
+    subscriberCount: Number, // If available
+    viewCount: Number // If available
+  },
+  analysis: {
+    targetAudience: String, // Description of the target audience
+    mainTopics: [String], // Main topics covered by the channel
+    publicationFrequency: Number, // Videos per month
+    visualStyle: String, // Description of visual style
+    communicationStyle: String, // Description of communication approach
+    popularVideosAnalysis: [
+      {
+        videoId: String,
+        title: String,
+        views: Number,
+        engagement: Number, // Likes/views ratio or similar metric
+        keyFactors: [String] // Factors contributing to video success
+      }
+    ],
+    popularThumbnailsAnalysis: {
+      commonElements: [String], // Common elements in thumbnails
+      colorSchemes: [String], // Common color schemes
+      textUsage: String, // How text is used in thumbnails
+      imageComposition: String // Common image composition patterns
+    },
+    popularTitlesAnalysis: {
+      patterns: [String], // Common title patterns
+      lengthStats: { min: Number, max: Number, avg: Number }, // Title length statistics
+      keywordsUsage: [{ keyword: String, frequency: Number }] // Common keywords
+    }
+  },
+  metadata: {
+    thumbnailUrl: String, // Channel thumbnail URL
+    country: String, // Channel country if available
+    startDate: Date, // When the channel was created
+    customUrl: String // Custom URL if available
+  },
+  analyzedAt: Date, // When the channel was last analyzed
+  createdAt: Date,
+  updatedAt: Date
 }
 ```
 
@@ -115,11 +168,30 @@ YTMind follows a modern web application architecture with the following componen
   channelId: String, // Reference to parent channel
   title: String,
   description: String,
-  publishedAt: Date,
-  thumbnailUrl: String,
-  tags: [String],
-  duration: String,
-  analyzedAt: Date
+  statistics: {
+    viewCount: Number,
+    likeCount: Number,
+    commentCount: Number
+  },
+  metadata: {
+    publishedAt: Date,
+    thumbnailUrl: String,
+    duration: String, // ISO 8601 duration format
+    tags: [String],
+    category: String
+  },
+  analysis: {
+    topics: [String], // Topics covered in the video
+    keywords: [String], // Extracted keywords
+    thumbnailAnalysis: String, // Analysis of thumbnail
+    titleAnalysis: String, // Analysis of title pattern
+    hooks: [String], // Identified hooks in the video
+    callToActions: [String] // Identified CTAs in the video
+    scriptAnalysis: {}
+  },
+  analyzedAt: Date,
+  createdAt: Date,
+  updatedAt: Date
 }
 ```
 
@@ -131,7 +203,14 @@ YTMind follows a modern web application architecture with the following componen
   name: String,
   type: String, // e.g., 'script', 'thumbnail_guide'
   content: String,
-  uploadedAt: Date
+  metadata: {
+    format: String, // e.g., 'markdown', 'text'
+    tags: [String], // User-defined tags
+    description: String // Document description
+  },
+  uploadedAt: Date,
+  createdAt: Date,
+  updatedAt: Date
 }
 ```
 
@@ -151,6 +230,8 @@ YTMind follows a modern web application architecture with the following componen
 - `GET /api/agents/:id` - Get a specific agent
 - `PUT /api/agents/:id` - Update an agent
 - `DELETE /api/agents/:id` - Delete an agent
+- `GET /api/agents/:id/functions` - Get functions for a specific agent
+- `GET /api/agents/:id/used-agents` - Get agents used by a specific agent
 
 ### YouTube Analysis Endpoints
 
@@ -197,7 +278,17 @@ YTMind follows a modern web application architecture with the following componen
    - Generated content is presented to user in chat
 
 3. **Agent Interaction Flow**
+
    - User selects or creates an agent
    - System loads agent configuration
    - User interacts with the agent via chat
-   - Agent responses are based on its specialized configuration
+   - Agent may use other specialized agents for specific tasks
+   - Agent responses are based on its specialized configuration and functions
+
+4. **Multi-Agent Collaboration Flow**
+
+   - Primary agent receives user request
+   - Primary agent determines if specialized agents are needed
+   - Primary agent delegates specific tasks to specialized agents
+   - Specialized agents process their tasks and return results
+   - Primary agent integrates results and provides final response to user

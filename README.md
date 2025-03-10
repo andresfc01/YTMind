@@ -1,105 +1,108 @@
-# YTMind
+# YTMind - Asistente IA para Creadores de YouTube
 
-YTMind is a personal web platform that serves as a specialized YouTube assistant, combining competitor analysis with AI-powered content generation. The system is built around an intelligent chat interface that allows users to analyze specific YouTube channels on demand and generate content ideas based on that analysis.
+YTMind es una aplicación web que utiliza inteligencia artificial para ayudar a los creadores de contenido en YouTube a optimizar sus canales, generar ideas para videos y crear mejores contenidos.
 
-## Features
+## Características
 
-- **YouTube Channel Analysis**: Extract key information from specified YouTube channels
-- **Knowledge Base System**: Store and reference analyzed channels in conversations
-- **Content Generation**: Generate video ideas, scripts, titles, and thumbnail concepts
-- **Specialized Agents**: Create different AI agents for specific tasks
-- **Dark Mode UI**: Clean, minimalist interface similar to ChatGPT
+- **Análisis de Canales**: Analiza canales de YouTube para extraer insights valiosos
+- **Generación de Ideas**: Genera ideas para videos basadas en análisis de competidores
+- **Escritura de Guiones**: Crea guiones detallados para diferentes tipos de contenido
+- **Optimización SEO**: Sugerencias para thumbnails y optimización de SEO
+- **Base de Conocimiento**: Almacena y hace referencia a documentos en las conversaciones
+- **Interfaz Tipo Chat**: Interfaz conversacional similar a ChatGPT
 
-## Tech Stack
+## Tecnologías
 
-- **Frontend**: Next.js with JavaScript and TailwindCSS
-- **Backend**: Next.js API routes
-- **Database**: MongoDB
-- **AI Model**: Gemini 2.0 Flash (with option to switch models)
+- **Frontend**: Next.js, TailwindCSS, React
+- **Backend**: Next.js API Routes
+- **Base de Datos**: MongoDB
+- **IA**: Gemini API
+- **Datos**: YouTube Data API
 
-## Project Structure
+## Instalación
+
+1. Clona el repositorio:
+
+```bash
+git clone https://github.com/tu-usuario/yt-mind.git
+cd yt-mind
+```
+
+2. Instala las dependencias:
+
+```bash
+npm install
+```
+
+3. Crea un archivo `.env.local` con las siguientes variables:
 
 ```
-YTMind/
-├── docs/                  # Project documentation
-│   ├── project_overview.md
-│   ├── technical_architecture.md
-│   ├── specialized_agents.md
-│   ├── implementation_roadmap.md
-│   └── ui_design.md
-├── public/                # Static assets
-├── src/
-│   ├── app/               # Next.js app directory
-│   ├── components/        # React components
-│   ├── lib/               # Utility functions and services
-│   ├── models/            # Data models
-│   └── styles/            # Global styles
-├── .env.example           # Example environment variables
-├── .gitignore             # Git ignore file
-├── next.config.js         # Next.js configuration
-├── package.json           # Project dependencies
-├── README.md              # Project overview
-└── tailwind.config.js     # TailwindCSS configuration
+# MongoDB Connection
+MONGODB_URI=mongodb+srv://username:password@cluster.mongodb.net/ytmind?retryWrites=true&w=majority
+
+# YouTube Data API
+YOUTUBE_API_KEY=your_youtube_api_key_here
+
+# Gemini API
+GEMINI_API_KEY=your_gemini_api_key_here
+
+# Application Settings
+NEXT_PUBLIC_APP_URL=http://localhost:3000
+NODE_ENV=development
 ```
+
+4. Inicia el servidor de desarrollo:
+
+```bash
+npm run dev
+```
+
+5. Abre [http://localhost:3000](http://localhost:3000) en tu navegador.
+
+## Estructura del Proyecto
+
+El proyecto sigue una estructura organizada basada en funcionalidades:
+
+- `src/app`: Páginas y rutas de la aplicación
+- `src/components`: Componentes React reutilizables
+- `src/lib`: Utilidades y servicios
+- `src/models`: Modelos de datos
+
+## Licencia
+
+Este proyecto está bajo la licencia MIT.
 
 ## Getting Started
 
-### Prerequisites
+First, run the development server:
 
-- Node.js (v18 or higher)
-- MongoDB instance (local or Atlas)
-- YouTube Data API key
-- Gemini API key
+```bash
+npm run dev
+# or
+yarn dev
+# or
+pnpm dev
+# or
+bun dev
+```
 
-### Installation
+Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
-1. Clone the repository:
+You can start editing the page by modifying `app/page.js`. The page auto-updates as you edit the file.
 
-   ```bash
-   git clone https://github.com/yourusername/ytmind.git
-   cd ytmind
-   ```
+This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
 
-2. Install dependencies:
+## Learn More
 
-   ```bash
-   npm install
-   ```
+To learn more about Next.js, take a look at the following resources:
 
-3. Create a `.env.local` file based on `.env.example`:
+- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
+- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
 
-   ```
-   MONGODB_URI=your_mongodb_connection_string
-   YOUTUBE_API_KEY=your_youtube_api_key
-   GEMINI_API_KEY=your_gemini_api_key
-   ```
+You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
 
-4. Run the development server:
+## Deploy on Vercel
 
-   ```bash
-   npm run dev
-   ```
+The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
 
-5. Open [http://localhost:3000](http://localhost:3000) in your browser.
-
-## Documentation
-
-Detailed documentation is available in the `docs/` directory:
-
-- [Project Overview](docs/project_overview.md)
-- [Technical Architecture](docs/technical_architecture.md)
-- [Specialized Agents](docs/specialized_agents.md)
-- [Implementation Roadmap](docs/implementation_roadmap.md)
-- [UI Design](docs/ui_design.md)
-
-## License
-
-This project is for personal use only.
-
-## Acknowledgements
-
-- [Next.js](https://nextjs.org/)
-- [TailwindCSS](https://tailwindcss.com/)
-- [MongoDB](https://www.mongodb.com/)
-- [Google Gemini](https://ai.google.dev/)
-- [YouTube Data API](https://developers.google.com/youtube/v3)
+Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
