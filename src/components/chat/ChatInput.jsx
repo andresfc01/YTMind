@@ -1,28 +1,33 @@
 import React, { useState, useRef, useEffect } from "react";
+import { FiSend } from "react-icons/fi";
+import AgentSelector from "../agents/AgentSelector";
 
 /**
  * ChatInput component that exactly matches ChatGPT's input design
  * Includes auto-growing textarea and send button
  */
-export default function ChatInput({ onSendMessage, disabled }) {
+export default function ChatInput({
+  onSendMessage,
+  disabled = false,
+  agents = [],
+  selectedAgentId = null,
+  onSelectAgent,
+}) {
   const [message, setMessage] = useState("");
   const textareaRef = useRef(null);
 
   useEffect(() => {
     if (textareaRef.current) {
-      // Reset height to auto to get the correct scrollHeight
       textareaRef.current.style.height = "auto";
-      // Set new height based on scrollHeight
-      textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`;
+      textareaRef.current.style.height = `${Math.min(textareaRef.current.scrollHeight, 200)}px`;
     }
   }, [message]);
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (message.trim() && !disabled) {
-      onSendMessage(message);
+    if (message.trim()) {
+      onSendMessage(message.trim());
       setMessage("");
-      // Reset textarea height
       if (textareaRef.current) {
         textareaRef.current.style.height = "auto";
       }
@@ -37,50 +42,30 @@ export default function ChatInput({ onSendMessage, disabled }) {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="relative flex w-full flex-col" role="form" aria-label="Message input form">
-      <div className="relative flex w-full flex-grow flex-col rounded-xl border border-white/10 bg-background-primary shadow-[0_0_15px_rgba(0,0,0,0.10)]">
-        <textarea
-          ref={textareaRef}
-          value={message}
-          onChange={(e) => setMessage(e.target.value)}
-          onKeyDown={handleKeyDown}
-          placeholder="Message YouTube Mind..."
-          rows="1"
-          className="m-0 w-full resize-none border-0 bg-transparent p-3 pr-10 focus:ring-0 focus-visible:ring-0 md:py-4 md:pl-4"
-          style={{
-            maxHeight: "200px",
-            height: "52px",
-            overflowY: "hidden",
-          }}
-          disabled={disabled}
-          aria-label="Message input"
-          aria-multiline="true"
-          aria-disabled={disabled}
-        />
-        <button
-          type="submit"
-          disabled={!message.trim() || disabled}
-          className="absolute bottom-2.5 right-3 rounded-lg p-1 text-text-primary hover:bg-white/5 disabled:hover:bg-transparent md:bottom-3 md:right-4"
-          aria-label="Send message"
-        >
-          <svg
-            width="24"
-            height="24"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            className={`h-5 w-5 ${
-              message.trim() && !disabled ? "text-brand-primary" : "text-text-secondary"
-            } transition-colors`}
-            aria-hidden="true"
+    <form onSubmit={handleSubmit} className="relative w-full">
+      <div className="flex items-end gap-2">
+        {agents.length > 0 && (
+          <AgentSelector agents={agents} selectedAgentId={selectedAgentId} onSelectAgent={onSelectAgent} />
+        )}
+        <div className="relative flex-1">
+          <textarea
+            ref={textareaRef}
+            value={message}
+            onChange={(e) => setMessage(e.target.value)}
+            onKeyDown={handleKeyDown}
+            placeholder="Escribe un mensaje..."
+            className="w-full resize-none rounded-lg border border-white/10 bg-background-secondary p-3 pr-10 text-text-primary placeholder-text-secondary/50 focus:border-brand-primary focus:ring-brand-primary"
+            rows={1}
+            disabled={disabled}
+          />
+          <button
+            type="submit"
+            disabled={!message.trim() || disabled}
+            className="absolute bottom-3 right-3 text-text-secondary hover:text-text-primary disabled:opacity-50"
           >
-            <path d="M22 2L11 13" />
-            <path d="M22 2L15 22L11 13L2 9L22 2Z" />
-          </svg>
-        </button>
+            <FiSend className="h-5 w-5" />
+          </button>
+        </div>
       </div>
     </form>
   );

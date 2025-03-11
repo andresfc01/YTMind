@@ -1,6 +1,7 @@
 import React, { useRef, useEffect, useState } from "react";
 import ChatMessage from "./ChatMessage";
 import ChatInput from "./ChatInput";
+import AgentSelector from "../agents/AgentSelector";
 
 /**
  * ChatContainer component that exactly matches ChatGPT's chat interface design
@@ -12,6 +13,10 @@ export default function ChatContainer({
   isLoading = false,
   partialResponse = "",
   onExampleClick,
+  agents = [],
+  selectedAgentId = null,
+  onSelectAgent = () => {},
+  children,
 }) {
   const messagesEndRef = useRef(null);
   const [systemPrompt, setSystemPrompt] = useState("");
@@ -49,94 +54,104 @@ export default function ChatContainer({
   const handleSystemPromptKeyDown = (e) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
-      e.target.blur(); // Provocar el evento blur que guardará el mensaje
+      if (systemPrompt.trim()) {
+        onSendMessage(systemPrompt, "system");
+        setSystemPrompt("");
+        e.target.style.height = "auto";
+      }
     }
   };
 
   return (
-    <div className="flex h-full flex-col bg-background-primary text-text-primary">
-      {/* Important disclaimer text - moved to top for better LCP */}
-      <p className="text-center text-xs text-text-secondary py-2">
-        YouTube Mind puede cometer errores. Verifica la información importante.
-      </p>
+    <div className="flex h-full flex-col">
+      {/* Welcome screen or messages */}
+      <div className="flex-1 overflow-y-auto px-4 sm:px-6">
+        {messages.length === 0 ? (
+          // Welcome screen with improved visual hierarchy
+          <div className="flex h-full flex-col items-center justify-center">
+            <div className="w-full max-w-lg space-y-6">
+              <div className="text-center">
+                <h1 className="mb-2 text-4xl font-semibold text-[#1a1a1a]">YTMind</h1>
+                <p className="text-sm text-[#666666]">Tu asistente personal para análisis de YouTube</p>
+              </div>
 
-      {/* Campo de entrada para el prompt del sistema - visible siempre */}
-      <div className="border-b border-white/10 px-4 py-2 bg-background-secondary/30">
-        <div className="mx-auto flex max-w-3xl items-center gap-2">
-          <div className="flex items-center gap-2 text-xs text-text-secondary">
-            <span>Sistema:</span>
-          </div>
-          <div className="flex-1 relative">
-            <textarea
-              value={systemPrompt}
-              onChange={handleSystemPromptChange}
-              onBlur={handleSystemPromptBlur}
-              onKeyDown={handleSystemPromptKeyDown}
-              placeholder="Añade instrucciones para el asistente... (se guardarán automáticamente al presionar Enter o al quitar el foco)"
-              className="w-full min-h-[32px] max-h-[100px] px-3 py-1 text-sm rounded-md border border-white/10 bg-background-primary focus:outline-none focus:ring-1 focus:ring-brand-primary resize-none overflow-y-auto"
-              rows={1}
-            ></textarea>
-            {messages.some((msg) => msg.role === "system") && (
-              <div className="absolute right-2 top-1 text-[10px] text-green-500">✓ Instrucciones guardadas</div>
-            )}
-          </div>
-        </div>
-      </div>
+              <div className="rounded-lg border border-[#e5e5e5] bg-[#f9f9f9] p-6">
+                <h2 className="mb-4 text-center text-lg font-medium text-[#1a1a1a]">Sistema</h2>
+                <textarea
+                  value={systemPrompt}
+                  onChange={handleSystemPromptChange}
+                  onBlur={handleSystemPromptBlur}
+                  onKeyDown={handleSystemPromptKeyDown}
+                  placeholder="Escribe aquí las instrucciones del sistema para configurar el comportamiento del asistente..."
+                  className="w-full rounded-lg border border-[#e5e5e5] bg-white p-3 text-[#1a1a1a] placeholder-[#999999] focus:border-[#666666] focus:ring-1 focus:ring-[#666666]"
+                  rows="4"
+                  style={{ resize: "none" }}
+                />
+              </div>
 
-      {messages.length === 0 ? (
-        // Welcome screen
-        <div className="flex flex-1 flex-col items-center justify-center px-6 pb-32 text-center">
-          <h1 className="mb-10 text-4xl font-bold">YouTube Mind</h1>
-          <div className="flex flex-col gap-4 md:flex-row">
-            <div className="flex flex-col gap-4">
-              <h2 className="text-lg font-medium">Ejemplos</h2>
-              <button
-                type="button"
-                className="rounded-xl border border-white/10 p-4 text-left hover:bg-white/5"
-                onClick={() => onExampleClick("Analiza mi canal de YouTube y dame consejos para mejorar")}
-              >
-                "Analiza mi canal de YouTube y dame consejos para mejorar"
-              </button>
-              <button
-                type="button"
-                className="rounded-xl border border-white/10 p-4 text-left hover:bg-white/5"
-                onClick={() => onExampleClick("Genera ideas de videos para mi nicho de tecnología")}
-              >
-                "Genera ideas de videos para mi nicho de tecnología"
-              </button>
-              <button
-                type="button"
-                className="rounded-xl border border-white/10 p-4 text-left hover:bg-white/5"
-                onClick={() => onExampleClick("Ayúdame a escribir un guión para mi próximo video")}
-              >
-                "Ayúdame a escribir un guión para mi próximo video"
-              </button>
+              <div>
+                <h2 className="mb-4 text-center text-lg font-medium text-[#1a1a1a]">Ejemplos</h2>
+                <div className="grid gap-3">
+                  <button
+                    className="rounded-lg border border-[#e5e5e5] bg-white p-4 text-left text-[#1a1a1a] transition-colors hover:bg-[#f5f5f5]"
+                    onClick={() => onExampleClick("Analiza las tendencias actuales en contenido de YouTube.")}
+                  >
+                    <p className="text-sm">&quot;Analiza las tendencias actuales en contenido de YouTube.&quot;</p>
+                  </button>
+                  <button
+                    className="rounded-lg border border-[#e5e5e5] bg-white p-4 text-left text-[#1a1a1a] transition-colors hover:bg-[#f5f5f5]"
+                    onClick={() => onExampleClick("Sugiere formas de mejorar la retención de audiencia en mis videos.")}
+                  >
+                    <p className="text-sm">
+                      &quot;Sugiere formas de mejorar la retención de audiencia en mis videos.&quot;
+                    </p>
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
-        </div>
-      ) : (
-        // Chat messages
-        <div className="flex-1 overflow-y-auto scrollbarthin">
-          <div className="flex flex-col gap-3 px-4 py-5">
-            {messages.map((message, index) => (
-              <ChatMessage key={index} role={message.role} content={message.content} />
-            ))}
-            {partialResponse && <ChatMessage role="assistant" content={partialResponse} isPartial={true} />}
-            {isLoading && !partialResponse && (
-              <div className="flex items-center gap-4 px-4 py-8">
-                <div className="h-6 w-6 animate-spin rounded-full border-2 border-white/20 border-t-white"></div>
-                <span className="text-sm text-text-secondary">Pensando...</span>
+        ) : (
+          // Messages list with improved spacing
+          <>
+            {children ? (
+              <>
+                {children}
+                <div ref={messagesEndRef} />
+              </>
+            ) : (
+              <div className="pb-32 pt-5">
+                {messages.map((msg, index) => (
+                  <div key={index} className="mb-8 last:mb-0">
+                    <ChatMessage role={msg.role} content={msg.content} isFunctionCall={msg.isFunctionCall || false} />
+                  </div>
+                ))}
+                {partialResponse && (
+                  <div className="mb-8">
+                    <ChatMessage role="assistant" content={partialResponse} isPartial={true} />
+                  </div>
+                )}
+                {isLoading && (
+                  <div className="my-8 flex w-full justify-center">
+                    <div className="h-8 w-8 animate-spin rounded-full border-2 border-[#e5e5e5] border-t-[#666666]"></div>
+                  </div>
+                )}
+                <div ref={messagesEndRef} />
               </div>
             )}
-            <div ref={messagesEndRef} />
-          </div>
-        </div>
-      )}
+          </>
+        )}
+      </div>
 
-      {/* Input box */}
-      <div className="border-t border-white/10 px-4 py-2">
-        <div className="mx-auto flex max-w-3xl flex-col gap-3">
-          <ChatInput onSendMessage={onSendMessage} disabled={isLoading} />
+      {/* Input box with subtle separation */}
+      <div className="fixed bottom-0 left-0 w-full border-t border-[#e5e5e5] bg-white/80 backdrop-blur-sm pb-4 pt-4 sm:pb-6">
+        <div className="mx-auto flex max-w-4xl px-4">
+          <ChatInput
+            onSendMessage={onSendMessage}
+            disabled={isLoading}
+            agents={agents}
+            selectedAgentId={selectedAgentId}
+            onSelectAgent={onSelectAgent}
+          />
         </div>
       </div>
     </div>

@@ -15,17 +15,16 @@ export default function MainLayout({ children }) {
   };
 
   return (
-    <div className="flex h-screen w-full overflow-hidden bg-chatgpt-main text-text-primary">
+    <div className="flex h-screen w-full overflow-hidden bg-[#ffffff] text-text-primary">
       {/* 
-        Sidebar container - ChatGPT uses approximately 260px width for sidebar
-        On mobile, it becomes a sliding panel that overlays the content
+        Sidebar container - Darker background with border separation
       */}
       <div
         className={`
           fixed md:relative inset-y-0 left-0 z-50 
           w-[260px] max-w-[260px] md:max-w-[260px]
           h-full flex-shrink-0 flex flex-col 
-          bg-chatgpt-sidebar border-r border-chatgpt-border
+          bg-[#f7f7f8] border-r border-[#e5e5e5]
           transform transition-transform duration-200 ease-in-out
           ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}
           md:translate-x-0
@@ -34,18 +33,21 @@ export default function MainLayout({ children }) {
         <Sidebar />
       </div>
 
-      {/* Mobile overlay - only visible when sidebar is open on mobile */}
+      {/* Mobile overlay */}
       {sidebarOpen && (
-        <div className="fixed inset-0 z-40 bg-black/70 md:hidden" onClick={toggleSidebar} aria-hidden="true" />
+        <div
+          className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm md:hidden"
+          onClick={toggleSidebar}
+          aria-hidden="true"
+        />
       )}
 
       {/* 
-        Main content area - matches ChatGPT's layout proportions
-        Takes all remaining width after the fixed-width sidebar
+        Main content area - Clean white background with subtle border separation
       */}
-      <div className="flex flex-1 flex-col w-full h-full overflow-hidden">
+      <div className="flex flex-1 flex-col w-full h-full overflow-hidden bg-white">
         <Header toggleSidebar={toggleSidebar} sidebarOpen={sidebarOpen} />
-        <main className="relative flex-1 overflow-hidden">{children}</main>
+        <main className="relative flex-1 overflow-hidden border-t border-[#f0f0f0]">{children}</main>
       </div>
     </div>
   );

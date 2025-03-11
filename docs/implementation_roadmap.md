@@ -31,10 +31,10 @@ This roadmap outlines the phased approach to developing YTMind, focusing on deli
 
 ### Agent Framework
 
-- [ ] Design agent data model
-- [ ] Create agent management UI
-- [ ] Implement agent creation and editing
-- [ ] Develop agent selection in chat interface
+- [x] Design agent data model
+- [x] Create agent management UI
+- [x] Implement agent creation and editing
+- [x] Develop agent selection in chat interface
 
 ### Core Agents
 
@@ -45,9 +45,9 @@ This roadmap outlines the phased approach to developing YTMind, focusing on deli
 
 ### Agent Storage
 
-- [ ] Set up MongoDB collections for agents
-- [ ] Create API endpoints for agent operations
-- [ ] Implement agent persistence and retrieval
+- [x] Set up MongoDB collections for agents
+- [x] Create API endpoints for agent operations
+- [x] Implement agent persistence and retrieval
 
 ## Phase 3: YouTube Integration (Weeks 5-6)
 

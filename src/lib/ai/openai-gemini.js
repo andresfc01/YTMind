@@ -1,4 +1,5 @@
 import OpenAI from "openai";
+import { getFunctionByName } from "@/lib/functions";
 
 // Inicializar el cliente OpenAI con la configuración para Gemini
 const openai = new OpenAI({
@@ -14,12 +15,17 @@ const openai = new OpenAI({
  */
 export async function chatWithGemini(messages, options = {}) {
   try {
+    // Preparar las funciones para la API si se proporcionan
+    const tools = prepareTools(options.functions);
+
     const response = await openai.chat.completions.create({
-      model: "gemini-2.0-flash",
+      model: options.model || "gemini-2.0-flash",
       messages: convertToOpenAIFormat(messages),
       temperature: options.temperature || 0.7,
       top_p: options.topP || 0.95,
       max_tokens: options.maxOutputTokens || 4096,
+      tools: tools,
+      tool_choice: tools && tools.length > 0 ? "auto" : undefined,
     });
 
     return response.choices[0].message.content;
@@ -37,20 +43,94 @@ export async function chatWithGemini(messages, options = {}) {
  */
 export async function streamChatWithGemini(messages, options = {}) {
   try {
-    const stream = await openai.chat.completions.create({
-      model: "gemini-2.0-flash",
-      messages: convertToOpenAIFormat(messages),
+    // Preparar las funciones para la API si se proporcionan
+    const tools = prepareTools(options.functions);
+
+    console.log("Llamando a Gemini con funciones:", tools ? tools.length : 0);
+    if (tools && tools.length > 0) {
+      console.log("Herramientas preparadas:", JSON.stringify(tools, null, 2));
+    }
+
+    // Convertir mensajes al formato OpenAI
+    const formattedMessages = convertToOpenAIFormat(messages);
+    console.log("Mensajes formateados:", JSON.stringify(formattedMessages, null, 2));
+
+    // Crear la solicitud
+    const requestOptions = {
+      model: options.model || "gemini-2.0-flash",
+      messages: formattedMessages,
       temperature: options.temperature || 0.7,
       top_p: options.topP || 0.95,
       max_tokens: options.maxOutputTokens || 4096,
       stream: true,
-    });
+    };
 
-    return stream;
+    // Añadir herramientas si existen
+    if (tools && tools.length > 0) {
+      requestOptions.tools = tools;
+      requestOptions.tool_choice = "auto";
+    }
+
+    console.log("Opciones de solicitud:", JSON.stringify(requestOptions, null, 2));
+
+    try {
+      const stream = await openai.chat.completions.create(requestOptions);
+      return stream;
+    } catch (error) {
+      console.error("Error en la llamada a la API de Gemini:", error);
+
+      // Extraer más información del error
+      if (error.response) {
+        console.error("Detalles de la respuesta de error:", {
+          status: error.response.status,
+          headers: error.response.headers,
+          data: error.response.data,
+        });
+      }
+
+      throw error;
+    }
   } catch (error) {
     console.error("Error streaming chat with Gemini:", error);
     throw error;
   }
+}
+
+/**
+ * Prepara las definiciones de funciones como herramientas para la API de OpenAI/Gemini
+ * @param {Array} functionNames - Array de nombres de funciones
+ * @returns {Array|undefined} - Array de herramientas o undefined si no hay funciones
+ */
+function prepareTools(functionNames) {
+  if (!functionNames || !Array.isArray(functionNames) || functionNames.length === 0) {
+    return undefined;
+  }
+
+  // Convertir los nombres de funciones a definiciones completas
+  const tools = functionNames
+    .map((funcName) => {
+      // Si es un objeto con nombre, usamos el nombre
+      const name = typeof funcName === "object" ? funcName.name : funcName;
+      const functionDef = getFunctionByName(name);
+
+      if (!functionDef) {
+        console.warn(`Función no encontrada: ${name}`);
+        return null;
+      }
+
+      // Devolver la definición en el formato esperado por Gemini (OpenAI compatibility)
+      return {
+        type: "function",
+        function: {
+          name: functionDef.name,
+          description: functionDef.description,
+          parameters: functionDef.parameters,
+        },
+      };
+    })
+    .filter(Boolean); // Eliminar funciones no encontradas
+
+  return tools.length > 0 ? tools : undefined;
 }
 
 /**
@@ -79,10 +159,37 @@ function convertToOpenAIFormat(messages) {
 
   // Luego añadimos el resto de mensajes
   otherMessages.forEach((msg) => {
-    formattedMessages.push({
-      role: msg.role,
-      content: msg.content,
-    });
+    // Si es un mensaje de función, asegurarnos de que tenga el formato correcto
+    if (msg.role === "function") {
+      formattedMessages.push({
+        role: "function",
+        name: msg.name,
+        content: msg.content,
+      });
+    }
+    // Si es un mensaje de herramienta (tool)
+    else if (msg.role === "tool") {
+      formattedMessages.push({
+        role: "tool",
+        tool_call_id: msg.tool_call_id,
+        content: msg.content,
+      });
+    }
+    // Si es un mensaje del asistente con llamadas a herramientas
+    else if (msg.role === "assistant" && msg.tool_calls) {
+      formattedMessages.push({
+        role: "assistant",
+        content: msg.content,
+        tool_calls: msg.tool_calls,
+      });
+    }
+    // Cualquier otro tipo de mensaje
+    else {
+      formattedMessages.push({
+        role: msg.role,
+        content: msg.content,
+      });
+    }
   });
 
   return formattedMessages;
@@ -127,4 +234,68 @@ export function createReadableStream(stream) {
       }
     },
   });
+}
+
+/**
+ * Procesa un stream de OpenAI y maneja las llamadas a funciones
+ * @param {ReadableStream} stream - Stream de OpenAI
+ * @param {Function} onContent - Callback para contenido normal
+ * @param {Function} onFunctionCall - Callback para llamadas a funciones
+ */
+export async function processStreamWithFunctionCalls(stream, onContent, onFunctionCall) {
+  let toolCallData = null;
+
+  try {
+    for await (const chunk of stream) {
+      console.log("Chunk recibido:", JSON.stringify(chunk, null, 2));
+
+      // Manejar contenido normal
+      const content = chunk.choices[0]?.delta?.content || "";
+      if (content) {
+        onContent(content);
+      }
+
+      // Detectar llamadas a herramientas (funciones)
+      const toolCalls = chunk.choices[0]?.delta?.tool_calls;
+      if (toolCalls && toolCalls.length > 0) {
+        console.log("Detectada llamada a herramienta:", JSON.stringify(toolCalls, null, 2));
+
+        const toolCall = toolCalls[0];
+
+        if (!toolCallData) {
+          toolCallData = {
+            id: toolCall.id || "",
+            type: toolCall.type || "function",
+            function: {
+              name: toolCall.function?.name || "",
+              arguments: toolCall.function?.arguments || "",
+            },
+          };
+        } else {
+          if (toolCall.function?.name) {
+            toolCallData.function.name += toolCall.function.name;
+          }
+
+          if (toolCall.function?.arguments) {
+            toolCallData.function.arguments += toolCall.function.arguments;
+          }
+        }
+      }
+
+      // Si es el último chunk y tenemos una llamada a función completa, procesarla
+      if (chunk.choices[0]?.finish_reason === "tool_calls" && toolCallData) {
+        console.log("Llamada a función completa:", JSON.stringify(toolCallData, null, 2));
+        try {
+          const args = JSON.parse(toolCallData.function.arguments);
+          onFunctionCall(toolCallData.function.name, args);
+        } catch (error) {
+          console.error("Error parsing function arguments:", error);
+          console.error("Raw arguments:", toolCallData.function.arguments);
+        }
+      }
+    }
+  } catch (error) {
+    console.error("Error procesando stream con llamadas a funciones:", error);
+    throw error;
+  }
 }

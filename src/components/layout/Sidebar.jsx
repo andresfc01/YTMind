@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { AgentList, AgentModal } from "@/components/agents";
 
 /**
  * Componente para renderizar un ítem de chat con su botón de eliminar
@@ -48,32 +49,42 @@ const ChatItem = ({ chat, onLoadChat, onDeleteChat, isDeleting }) => {
       {isHovering && (
         <button
           type="button"
-          className="flex items-center justify-center h-8 w-8 rounded-md text-text-secondary hover:text-white hover:bg-red-500/30 transition-colors duration-150 ease-in-out"
+          className="absolute right-2 rounded-md p-1 text-text-secondary hover:bg-white/10 hover:text-text-primary"
           onClick={(e) => {
             e.stopPropagation();
             onDeleteChat(chat.id, e);
           }}
           disabled={isDeleting}
-          aria-label="Eliminar chat"
-          title="Eliminar chat"
+          aria-label={`Eliminar chat: ${chat.title}`}
         >
-          <svg
-            width="16"
-            height="16"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            className="h-4 w-4"
-            aria-hidden="true"
-          >
-            <polyline points="3 6 5 6 21 6" />
-            <path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2" />
-            <line x1="10" y1="11" x2="10" y2="17" />
-            <line x1="14" y1="11" x2="14" y2="17" />
-          </svg>
+          {isDeleting ? (
+            <svg className="h-4 w-4 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+              <path
+                className="opacity-75"
+                fill="currentColor"
+                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+              ></path>
+            </svg>
+          ) : (
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className="h-4 w-4"
+              aria-hidden="true"
+            >
+              <path d="M3 6h18" />
+              <path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6" />
+              <path d="M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2" />
+            </svg>
+          )}
         </button>
       )}
     </div>
@@ -91,6 +102,8 @@ export default function Sidebar({
   onDeleteChat,
   isLoading = false,
   isDeleting = false,
+  selectedAgentId = null,
+  onSelectAgent = () => {},
 }) {
   // Agrupar chats por fecha
   const today = new Date().toDateString();
@@ -103,13 +116,117 @@ export default function Sidebar({
     return chatDate !== today && chatDate !== yesterday;
   });
 
+  // Estado para los agentes
+  const [agents, setAgents] = useState([]);
+  const [isLoadingAgents, setIsLoadingAgents] = useState(true);
+  const [agentError, setAgentError] = useState(null);
+  const [showAgentModal, setShowAgentModal] = useState(false);
+  const [editingAgent, setEditingAgent] = useState(null);
+
+  // Cargar agentes al montar el componente
+  useEffect(() => {
+    const fetchAgents = async () => {
+      try {
+        setIsLoadingAgents(true);
+        const response = await fetch("/api/agents");
+
+        if (!response.ok) {
+          throw new Error(`Error: ${response.status}`);
+        }
+
+        const data = await response.json();
+        setAgents(data.agents || []);
+        setAgentError(null);
+      } catch (err) {
+        console.error("Error fetching agents:", err);
+        setAgentError("Failed to load agents");
+      } finally {
+        setIsLoadingAgents(false);
+      }
+    };
+
+    fetchAgents();
+  }, []);
+
+  // Manejadores para agentes
+  const handleCreateAgent = () => {
+    setEditingAgent(null);
+    setShowAgentModal(true);
+  };
+
+  const handleEditAgent = (agent) => {
+    setEditingAgent(agent);
+    setShowAgentModal(true);
+  };
+
+  const handleDeleteAgent = async (agent) => {
+    if (!confirm(`Are you sure you want to delete "${agent.name}"?`)) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/agents/${agent.id}`, {
+        method: "DELETE",
+      });
+
+      if (!response.ok) {
+        throw new Error(`Error: ${response.status}`);
+      }
+
+      // Actualizar la lista de agentes
+      setAgents((prevAgents) => prevAgents.filter((a) => a.id !== agent.id));
+    } catch (err) {
+      console.error("Error deleting agent:", err);
+      alert("Failed to delete agent");
+    }
+  };
+
+  const handleSubmitAgent = async (formData) => {
+    try {
+      // Si editingAgent existe, actualizar; de lo contrario, crear
+      const url = editingAgent ? `/api/agents/${editingAgent.id}` : "/api/agents";
+
+      const method = editingAgent ? "PUT" : "POST";
+
+      const response = await fetch(url, {
+        method,
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(formData),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Error: ${response.status}`);
+      }
+
+      const data = await response.json();
+
+      // Actualizar la lista de agentes
+      if (editingAgent) {
+        setAgents((prevAgents) => prevAgents.map((agent) => (agent.id === editingAgent.id ? data.agent : agent)));
+      } else {
+        setAgents((prevAgents) => [...prevAgents, data.agent]);
+      }
+
+      // Cerrar el modal
+      setShowAgentModal(false);
+      setEditingAgent(null);
+
+      return data.agent;
+    } catch (err) {
+      console.error("Error submitting agent:", err);
+      throw new Error("Failed to save agent");
+    }
+  };
+
   return (
-    <div className="flex h-full w-full flex-col bg-background-primary">
+    <div className="flex h-full w-full flex-col bg-[#f7f7f8]">
       {/* New chat button */}
-      <div className="flex-shrink-0 p-2">
+      <div className="flex-shrink-0 border-b border-[#e5e5e5] p-2">
         <button
           type="button"
-          className="flex w-full items-center gap-3 rounded-md border border-white/10 p-3 text-sm transition-colors duration-200 hover:bg-white/5"
+          className="flex w-full items-center gap-3 rounded-md border border-[#e5e5e5] bg-white p-3 text-sm transition-colors duration-200 hover:bg-[#f5f5f5]"
           onClick={onNewChat}
         >
           <svg
@@ -131,209 +248,118 @@ export default function Sidebar({
         </button>
       </div>
 
-      {/* Chat history */}
       <div className="flex-1 overflow-y-auto scrollbarthin p-2">
-        {isLoading ? (
-          // Indicador de carga
-          <div className="flex flex-col items-center justify-center h-32">
-            <div className="h-6 w-6 animate-spin rounded-full border-2 border-white/20 border-t-white mb-2"></div>
-            <span className="text-sm text-text-secondary">Cargando chats...</span>
-          </div>
-        ) : chatHistory.length === 0 ? (
-          // Mensaje cuando no hay chats
-          <div className="flex flex-col items-center justify-center h-32 text-center px-4">
-            <span className="text-sm text-text-secondary">No hay chats guardados</span>
-            <span className="text-xs text-text-secondary mt-1">Inicia una nueva conversación</span>
-          </div>
-        ) : (
-          // Lista de chats agrupados por fecha
-          <>
-            {/* Today's chats */}
-            {todayChats.length > 0 && (
-              <div className="mb-4">
-                <div className="mb-1 flex items-center justify-between px-2">
-                  <h2 id="today-chats" className="text-xs font-medium uppercase text-text-secondary">
-                    Hoy
-                  </h2>
-                  <button
-                    type="button"
-                    className="flex h-6 w-6 items-center justify-center rounded-md text-text-secondary hover:bg-white/5"
-                    aria-expanded="true"
-                    aria-labelledby="today-chats"
-                  >
-                    <svg
-                      width="16"
-                      height="16"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      className="h-3 w-3"
-                      aria-hidden="true"
-                    >
-                      <polyline points="6 9 12 15 18 9" />
-                    </svg>
-                  </button>
+        {/* Chat history */}
+        <div className="mb-4">
+          {isLoading ? (
+            // Indicador de carga
+            <div className="flex flex-col items-center justify-center h-32">
+              <div className="h-6 w-6 animate-spin rounded-full border-2 border-[#e5e5e5] border-t-[#666666] mb-2"></div>
+              <span className="text-sm text-[#666666]">Cargando chats...</span>
+            </div>
+          ) : chatHistory.length === 0 ? (
+            // Mensaje cuando no hay chats
+            <div className="flex flex-col items-center justify-center h-20 text-[#666666]">
+              <p className="text-sm">No hay chats disponibles</p>
+            </div>
+          ) : (
+            // Lista de chats agrupados por fecha
+            <div className="space-y-4">
+              {/* Chats de hoy */}
+              {todayChats.length > 0 && (
+                <div>
+                  <h3 className="mb-2 px-3 text-xs font-medium text-[#666666]">Hoy</h3>
+                  <div className="space-y-1">
+                    {todayChats.map((chat) => (
+                      <ChatItem
+                        key={chat.id}
+                        chat={chat}
+                        onLoadChat={onLoadChat}
+                        onDeleteChat={onDeleteChat}
+                        isDeleting={isDeleting}
+                      />
+                    ))}
+                  </div>
                 </div>
+              )}
 
-                <div className="space-y-1">
-                  {todayChats.map((chat) => (
-                    <ChatItem
-                      key={chat.id}
-                      chat={chat}
-                      onLoadChat={onLoadChat}
-                      onDeleteChat={onDeleteChat}
-                      isDeleting={isDeleting}
-                    />
-                  ))}
+              {/* Chats de ayer */}
+              {yesterdayChats.length > 0 && (
+                <div>
+                  <h3 className="mb-2 px-3 text-xs font-medium text-[#666666]">Ayer</h3>
+                  <div className="space-y-1">
+                    {yesterdayChats.map((chat) => (
+                      <ChatItem
+                        key={chat.id}
+                        chat={chat}
+                        onLoadChat={onLoadChat}
+                        onDeleteChat={onDeleteChat}
+                        isDeleting={isDeleting}
+                      />
+                    ))}
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
 
-            {/* Yesterday's chats */}
-            {yesterdayChats.length > 0 && (
-              <div className="mb-4">
-                <div className="mb-1 flex items-center justify-between px-2">
-                  <h2 id="yesterday-chats" className="text-xs font-medium uppercase text-text-secondary">
-                    Ayer
-                  </h2>
-                  <button
-                    type="button"
-                    className="flex h-6 w-6 items-center justify-center rounded-md text-text-secondary hover:bg-white/5"
-                    aria-expanded="true"
-                    aria-labelledby="yesterday-chats"
-                  >
-                    <svg
-                      width="16"
-                      height="16"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      className="h-3 w-3"
-                      aria-hidden="true"
-                    >
-                      <polyline points="6 9 12 15 18 9" />
-                    </svg>
-                  </button>
+              {/* Chats más antiguos */}
+              {olderChats.length > 0 && (
+                <div>
+                  <h3 className="mb-2 px-3 text-xs font-medium text-[#666666]">Anteriores</h3>
+                  <div className="space-y-1">
+                    {olderChats.map((chat) => (
+                      <ChatItem
+                        key={chat.id}
+                        chat={chat}
+                        onLoadChat={onLoadChat}
+                        onDeleteChat={onDeleteChat}
+                        isDeleting={isDeleting}
+                      />
+                    ))}
+                  </div>
                 </div>
+              )}
+            </div>
+          )}
+        </div>
 
-                <div className="space-y-1">
-                  {yesterdayChats.map((chat) => (
-                    <ChatItem
-                      key={chat.id}
-                      chat={chat}
-                      onLoadChat={onLoadChat}
-                      onDeleteChat={onDeleteChat}
-                      isDeleting={isDeleting}
-                    />
-                  ))}
-                </div>
-              </div>
-            )}
+        {/* Sección de Agentes con separador */}
+        <div className="relative mb-4 mt-6 pt-6 before:absolute before:top-0 before:left-2 before:right-2 before:border-t before:border-[#e5e5e5]">
+          <h2 className="mb-2 px-3 text-xs font-medium text-[#666666]">Agentes</h2>
 
-            {/* Older chats */}
-            {olderChats.length > 0 && (
-              <div className="mb-4">
-                <div className="mb-1 flex items-center justify-between px-2">
-                  <h2 id="older-chats" className="text-xs font-medium uppercase text-text-secondary">
-                    Anteriores
-                  </h2>
-                  <button
-                    type="button"
-                    className="flex h-6 w-6 items-center justify-center rounded-md text-text-secondary hover:bg-white/5"
-                    aria-expanded="true"
-                    aria-labelledby="older-chats"
-                  >
-                    <svg
-                      width="16"
-                      height="16"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      className="h-3 w-3"
-                      aria-hidden="true"
-                    >
-                      <polyline points="6 9 12 15 18 9" />
-                    </svg>
-                  </button>
-                </div>
-
-                <div className="space-y-1">
-                  {olderChats.map((chat) => (
-                    <ChatItem
-                      key={chat.id}
-                      chat={chat}
-                      onLoadChat={onLoadChat}
-                      onDeleteChat={onDeleteChat}
-                      isDeleting={isDeleting}
-                    />
-                  ))}
-                </div>
-              </div>
-            )}
-          </>
-        )}
-      </div>
-
-      {/* Bottom section */}
-      <div className="flex-shrink-0 border-t border-white/10 p-2">
-        <div className="space-y-2">
-          {/* Settings button */}
-          <button
-            type="button"
-            className="flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm hover:bg-white/5"
-          >
-            <svg
-              width="16"
-              height="16"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              className="h-4 w-4"
-              aria-hidden="true"
-            >
-              <circle cx="12" cy="12" r="3" />
-              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" />
-            </svg>
-            <span>Configuración</span>
-          </button>
-
-          {/* Logout button */}
-          <button
-            type="button"
-            className="flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm hover:bg-white/5"
-          >
-            <svg
-              width="16"
-              height="16"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              className="h-4 w-4"
-              aria-hidden="true"
-            >
-              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
-              <polyline points="16 17 21 12 16 7" />
-              <line x1="21" y1="12" x2="9" y2="12" />
-            </svg>
-            <span>Cerrar sesión</span>
-          </button>
+          {isLoadingAgents ? (
+            <div className="flex flex-col items-center justify-center h-20">
+              <div className="h-5 w-5 animate-spin rounded-full border-2 border-[#e5e5e5] border-t-[#666666] mb-2"></div>
+              <span className="text-xs text-[#666666]">Cargando agentes...</span>
+            </div>
+          ) : agentError ? (
+            <div className="px-3 py-2 text-xs text-[#666666]">
+              <p>{agentError}</p>
+              <button onClick={() => window.location.reload()} className="mt-1 text-xs underline">
+                Reintentar
+              </button>
+            </div>
+          ) : (
+            <div className="px-1">
+              <AgentList
+                agents={agents}
+                selectedAgentId={selectedAgentId}
+                onSelectAgent={onSelectAgent}
+                onEditAgent={handleEditAgent}
+                onDeleteAgent={handleDeleteAgent}
+                onCreateAgent={handleCreateAgent}
+              />
+            </div>
+          )}
         </div>
       </div>
+
+      {/* Modal para crear/editar agentes */}
+      <AgentModal
+        isOpen={showAgentModal}
+        agent={editingAgent}
+        onClose={() => setShowAgentModal(false)}
+        onSubmit={handleSubmitAgent}
+      />
     </div>
   );
 }

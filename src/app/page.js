@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import RootLayout from "@/components/layout/RootLayout";
 import ChatContainer from "@/components/chat/ChatContainer";
+import ChatMessage from "@/components/chat/ChatMessage";
 
 export default function Home() {
   const [messages, setMessages] = useState([]);
@@ -13,6 +14,9 @@ export default function Home() {
   const [currentChatId, setCurrentChatId] = useState(null);
   const [isLoadingHistory, setIsLoadingHistory] = useState(true);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [agents, setAgents] = useState([]);
+  const [selectedAgentId, setSelectedAgentId] = useState(null);
+  const [isLoadingAgents, setIsLoadingAgents] = useState(true);
 
   // Cargar el historial de chats al iniciar
   useEffect(() => {
@@ -33,6 +37,27 @@ export default function Home() {
     };
 
     fetchChatHistory();
+  }, []);
+
+  // Cargar agentes al iniciar
+  useEffect(() => {
+    const fetchAgents = async () => {
+      try {
+        const response = await fetch("/api/agents");
+        if (response.ok) {
+          const data = await response.json();
+          setAgents(data.agents || []);
+        } else {
+          console.error("Error al cargar los agentes");
+        }
+      } catch (error) {
+        console.error("Error al cargar los agentes:", error);
+      } finally {
+        setIsLoadingAgents(false);
+      }
+    };
+
+    fetchAgents();
   }, []);
 
   // Cargar un chat específico
@@ -156,6 +181,18 @@ export default function Home() {
     }
   };
 
+  // Manejar la selección de agentes
+  const handleSelectAgent = (agentId) => {
+    setSelectedAgentId(agentId);
+
+    // Si hay un agente seleccionado, actualizar el mensaje del sistema
+    const selectedAgent = agents.find((agent) => agent.id === agentId);
+    if (selectedAgent && selectedAgent.systemPrompt) {
+      handleSendMessage(selectedAgent.systemPrompt, "system");
+    }
+  };
+
+  // Modificar handleSendMessage para incluir el agente seleccionado y manejar funciones
   const handleSendMessage = async (content, role = "user") => {
     if (!content.trim()) return;
 
@@ -180,7 +217,6 @@ export default function Home() {
 
       // Guardamos el mensaje del sistema en la base de datos
       if (currentChatId) {
-        // Si ya existe un chat, actualizamos el mensaje del sistema
         try {
           // Si había un mensaje del sistema previo, lo reemplazamos
           if (systemMessageIndex >= 0) {
@@ -293,13 +329,131 @@ export default function Home() {
         await addMessageToChat(chatId, newMessage);
       }
 
-      // Llamar a la API de chat para obtener la respuesta
+      // Obtener el agente seleccionado
+      const selectedAgent = agents.find((agent) => agent.id === selectedAgentId);
+
+      // Verificar si el agente tiene funciones asignadas
+      const hasFunctions =
+        selectedAgent &&
+        selectedAgent.functions &&
+        Array.isArray(selectedAgent.functions) &&
+        selectedAgent.functions.length > 0;
+
+      if (hasFunctions) {
+        console.log(
+          `Agente ${selectedAgent.name} tiene ${selectedAgent.functions.length} funciones asignadas:`,
+          selectedAgent.functions.map((f) => (typeof f === "string" ? f : f.name)).join(", ")
+        );
+
+        // Primero intentamos con manejo de funciones (no streaming)
+        try {
+          console.log("Enviando solicitud con handleFunctions=true");
+          const functionResponse = await fetch("/api/chat", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              messages: messagesForApi,
+              temperature: selectedAgent?.temperature || 0.7,
+              model: selectedAgent?.model || "gemini-2.0-flash",
+              agentId: selectedAgent?.id,
+              handleFunctions: true,
+            }),
+          });
+
+          if (!functionResponse.ok) {
+            console.error(`Error en la respuesta: ${functionResponse.status}`);
+            const errorText = await functionResponse.text();
+            console.error(`Detalle del error: ${errorText}`);
+            throw new Error(`Error: ${functionResponse.status}`);
+          }
+
+          const functionResult = await functionResponse.json();
+          console.log("Respuesta de función recibida:", functionResult);
+
+          // Si se ejecutó una función, añadimos un mensaje indicándolo
+          if (functionResult.functionCall) {
+            console.log("Función ejecutada:", functionResult.functionCall.name);
+            console.log("Resultado:", functionResult.functionCall.result);
+
+            // Añadir un mensaje indicando que se ejecutó una función
+            const functionMessage = {
+              role: "assistant",
+              content: `He ejecutado la función "${functionResult.functionCall.name}" para obtener información.`,
+              isFunctionCall: true,
+            };
+
+            // Añadir el mensaje al chat local
+            setMessages((prevMessages) => [...prevMessages, functionMessage]);
+
+            // Guardar el mensaje en la base de datos
+            if (chatId) {
+              try {
+                await addMessageToChat(chatId, functionMessage);
+              } catch (error) {
+                console.error("Error al guardar el mensaje de función:", error);
+              }
+            }
+
+            // Añadir el mensaje con la respuesta final
+            const assistantMessage = {
+              role: "assistant",
+              content: functionResult.response,
+            };
+
+            // Añadir el mensaje al chat local
+            setMessages((prevMessages) => [...prevMessages, assistantMessage]);
+
+            // Guardar el mensaje en la base de datos
+            if (chatId) {
+              try {
+                await addMessageToChat(chatId, assistantMessage);
+              } catch (error) {
+                console.error("Error al guardar el mensaje de respuesta:", error);
+              }
+            }
+
+            // Actualizar el historial de chats
+            if (chatId) {
+              setChatHistory((prevHistory) =>
+                prevHistory.map((chat) =>
+                  chat.id === chatId
+                    ? {
+                        ...chat,
+                        lastMessage: functionResult.response.substring(0, 50),
+                        messagesCount: chat.messagesCount + 2,
+                        updatedAt: new Date(),
+                      }
+                    : chat
+                )
+              );
+            }
+
+            setIsLoading(false);
+            return;
+          } else {
+            // Si no se ejecutó ninguna función, continuamos con el streaming normal
+            console.log("No se detectó llamada a función, continuando con streaming normal");
+          }
+        } catch (functionError) {
+          console.error("Error al procesar funciones:", functionError);
+          // Continuamos con el streaming normal en caso de error
+        }
+      }
+
+      // Llamar a la API de chat para obtener la respuesta (streaming normal)
       const response = await fetch("/api/chat", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ messages: messagesForApi }),
+        body: JSON.stringify({
+          messages: messagesForApi,
+          temperature: selectedAgent?.temperature || 0.7,
+          model: selectedAgent?.model || "gemini-2.0-flash",
+          agentId: selectedAgent?.id,
+        }),
       });
 
       if (!response.ok) {
@@ -415,7 +569,7 @@ export default function Home() {
     <RootLayout
       chatTitle={chatTitle}
       chatHistory={chatHistory}
-      isLoading={isLoading || isLoadingHistory}
+      isLoading={isLoading || isLoadingHistory || isLoadingAgents}
       isDeleting={isDeleting}
       onNewChat={handleNewChat}
       onDeleteChat={handleDeleteChat}
@@ -429,6 +583,9 @@ export default function Home() {
         isLoading={isLoading}
         partialResponse={partialResponse}
         onExampleClick={handleExampleClick}
+        agents={agents}
+        selectedAgentId={selectedAgentId}
+        onSelectAgent={handleSelectAgent}
       />
     </RootLayout>
   );
