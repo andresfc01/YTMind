@@ -526,9 +526,32 @@ export default function Home() {
   // Crear un nuevo chat
   const handleNewChat = () => {
     setMessages([]);
-    setPartialResponse("");
-    setChatTitle("Nuevo chat");
     setCurrentChatId(null);
+    setChatTitle("Nuevo chat");
+    setSelectedAgentId(null);
+  };
+
+  // Función para editar un mensaje existente
+  const handleEditMessage = async (index, newContent) => {
+    try {
+      // Actualizar mensaje en el estado local
+      const updatedMessages = [...messages];
+      updatedMessages[index].content = newContent;
+      setMessages(updatedMessages);
+
+      // Actualizar en la base de datos si existe un chat actual
+      if (currentChatId) {
+        await fetch(`/api/chats/${currentChatId}`, {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ messages: updatedMessages }),
+        });
+      }
+    } catch (error) {
+      console.error("Error al editar el mensaje:", error);
+    }
   };
 
   // Editar el título del chat
@@ -567,15 +590,15 @@ export default function Home() {
 
   return (
     <RootLayout
-      chatTitle={chatTitle}
-      chatHistory={chatHistory}
-      isLoading={isLoading || isLoadingHistory || isLoadingAgents}
-      isDeleting={isDeleting}
       onNewChat={handleNewChat}
-      onDeleteChat={handleDeleteChat}
-      onEditTitle={handleEditTitle}
-      onLoadChat={handleLoadChat}
+      chatHistory={chatHistory}
       currentChatId={currentChatId}
+      onLoadChat={handleLoadChat}
+      onDeleteChat={handleDeleteChat}
+      chatTitle={chatTitle}
+      onEditTitle={handleEditTitle}
+      isLoadingHistory={isLoadingHistory}
+      isDeleting={isDeleting}
     >
       <ChatContainer
         messages={messages}
@@ -586,6 +609,7 @@ export default function Home() {
         agents={agents}
         selectedAgentId={selectedAgentId}
         onSelectAgent={handleSelectAgent}
+        onEditMessage={handleEditMessage}
       />
     </RootLayout>
   );

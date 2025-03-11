@@ -61,6 +61,18 @@ const agentSchema = new mongoose.Schema({
   },
   functions: [functionSchema],
   usesAgents: [usedAgentSchema],
+  documents: [
+    {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Document",
+    },
+  ],
+  urls: [
+    {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Url",
+    },
+  ],
   icon: {
     type: String,
     default: "bot", // Valor por defecto para el icono

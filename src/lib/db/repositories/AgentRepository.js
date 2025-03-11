@@ -220,6 +220,202 @@ class AgentRepository {
     await this._verifyConnection();
     return Agent.find({ isDefault: true }).sort({ category: 1, name: 1 });
   }
+
+  /**
+   * Añadir un documento al agente
+   * @param {string} agentId - ID del agente
+   * @param {string} documentId - ID del documento
+   * @returns {Promise<Object>} - El agente actualizado
+   */
+  static async addDocument(agentId, documentId) {
+    await this._verifyConnection();
+    if (!mongoose.Types.ObjectId.isValid(agentId)) {
+      throw new Error(`ID de agente inválido: ${agentId}`);
+    }
+    if (!mongoose.Types.ObjectId.isValid(documentId)) {
+      throw new Error(`ID de documento inválido: ${documentId}`);
+    }
+
+    console.log(`Añadiendo documento ${documentId} al agente ${agentId}`);
+
+    // Verificar si el documento ya está asociado al agente
+    const agent = await Agent.findById(agentId);
+    if (!agent) {
+      throw new Error(`Agente con ID ${agentId} no encontrado`);
+    }
+
+    // Verificamos si documents es un array y lo inicializamos si no existe
+    if (!agent.documents) {
+      agent.documents = [];
+    }
+
+    // Verificamos si el documento ya está en el agente
+    if (agent.documents.includes(documentId)) {
+      console.log(`El documento ${documentId} ya está asociado al agente ${agentId}`);
+      return agent;
+    }
+
+    // Añadir el documento al agente
+    agent.documents.push(documentId);
+    await agent.save();
+
+    return agent;
+  }
+
+  /**
+   * Eliminar un documento del agente
+   * @param {string} agentId - ID del agente
+   * @param {string} documentId - ID del documento
+   * @returns {Promise<Object>} - El agente actualizado
+   */
+  static async removeDocument(agentId, documentId) {
+    await this._verifyConnection();
+    if (!mongoose.Types.ObjectId.isValid(agentId)) {
+      throw new Error(`ID de agente inválido: ${agentId}`);
+    }
+    if (!mongoose.Types.ObjectId.isValid(documentId)) {
+      throw new Error(`ID de documento inválido: ${documentId}`);
+    }
+
+    console.log(`Eliminando documento ${documentId} del agente ${agentId}`);
+
+    // Verificar si el agente existe
+    const agent = await Agent.findById(agentId);
+    if (!agent) {
+      throw new Error(`Agente con ID ${agentId} no encontrado`);
+    }
+
+    // Verificamos si documents es un array
+    if (!agent.documents || !Array.isArray(agent.documents)) {
+      console.log(`El agente ${agentId} no tiene documentos definidos`);
+      agent.documents = [];
+      await agent.save();
+      return agent;
+    }
+
+    // Eliminar el documento del agente
+    agent.documents = agent.documents.filter((docId) => docId.toString() !== documentId);
+    await agent.save();
+
+    return agent;
+  }
+
+  /**
+   * Obtener los documentos de un agente (solo IDs)
+   * @param {string} agentId - ID del agente
+   * @returns {Promise<Array>} - Lista de IDs de documentos
+   */
+  static async getDocumentIds(agentId) {
+    await this._verifyConnection();
+    if (!mongoose.Types.ObjectId.isValid(agentId)) {
+      throw new Error(`ID de agente inválido: ${agentId}`);
+    }
+
+    const agent = await Agent.findById(agentId);
+    if (!agent) {
+      throw new Error(`Agente con ID ${agentId} no encontrado`);
+    }
+
+    return agent.documents || [];
+  }
+
+  /**
+   * Añadir una URL al agente
+   * @param {string} agentId - ID del agente
+   * @param {string} urlId - ID de la URL
+   * @returns {Promise<Object>} - El agente actualizado
+   */
+  static async addUrl(agentId, urlId) {
+    await this._verifyConnection();
+    if (!mongoose.Types.ObjectId.isValid(agentId)) {
+      throw new Error(`ID de agente inválido: ${agentId}`);
+    }
+    if (!mongoose.Types.ObjectId.isValid(urlId)) {
+      throw new Error(`ID de URL inválido: ${urlId}`);
+    }
+
+    console.log(`Añadiendo URL ${urlId} al agente ${agentId}`);
+
+    // Verificar si la URL ya está asociada al agente
+    const agent = await Agent.findById(agentId);
+    if (!agent) {
+      throw new Error(`Agente con ID ${agentId} no encontrado`);
+    }
+
+    // Verificamos si urls es un array y lo inicializamos si no existe
+    if (!agent.urls) {
+      agent.urls = [];
+    }
+
+    // Verificamos si la URL ya está en el agente
+    if (agent.urls.includes(urlId)) {
+      console.log(`La URL ${urlId} ya está asociada al agente ${agentId}`);
+      return agent;
+    }
+
+    // Añadir la URL al agente
+    agent.urls.push(urlId);
+    await agent.save();
+
+    return agent;
+  }
+
+  /**
+   * Eliminar una URL del agente
+   * @param {string} agentId - ID del agente
+   * @param {string} urlId - ID de la URL
+   * @returns {Promise<Object>} - El agente actualizado
+   */
+  static async removeUrl(agentId, urlId) {
+    await this._verifyConnection();
+    if (!mongoose.Types.ObjectId.isValid(agentId)) {
+      throw new Error(`ID de agente inválido: ${agentId}`);
+    }
+    if (!mongoose.Types.ObjectId.isValid(urlId)) {
+      throw new Error(`ID de URL inválido: ${urlId}`);
+    }
+
+    console.log(`Eliminando URL ${urlId} del agente ${agentId}`);
+
+    // Verificar si el agente existe
+    const agent = await Agent.findById(agentId);
+    if (!agent) {
+      throw new Error(`Agente con ID ${agentId} no encontrado`);
+    }
+
+    // Verificamos si urls es un array
+    if (!agent.urls || !Array.isArray(agent.urls)) {
+      console.log(`El agente ${agentId} no tiene URLs definidas`);
+      agent.urls = [];
+      await agent.save();
+      return agent;
+    }
+
+    // Eliminar la URL del agente
+    agent.urls = agent.urls.filter((id) => id.toString() !== urlId);
+    await agent.save();
+
+    return agent;
+  }
+
+  /**
+   * Obtener las URLs de un agente (solo IDs)
+   * @param {string} agentId - ID del agente
+   * @returns {Promise<Array>} - Lista de IDs de URLs
+   */
+  static async getUrlIds(agentId) {
+    await this._verifyConnection();
+    if (!mongoose.Types.ObjectId.isValid(agentId)) {
+      throw new Error(`ID de agente inválido: ${agentId}`);
+    }
+
+    const agent = await Agent.findById(agentId);
+    if (!agent) {
+      throw new Error(`Agente con ID ${agentId} no encontrado`);
+    }
+
+    return agent.urls || [];
+  }
 }
 
 export default AgentRepository;

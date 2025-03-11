@@ -31,17 +31,17 @@ This roadmap outlines the phased approach to developing YTMind, focusing on deli
 
 ### Document Context System
 
-- [ ] Create document upload interface
-- [ ] Implement document storage in MongoDB
-- [ ] Develop document parsing and processing
-- [ ] Build document context integration with chat
+- [x] Create document upload interface
+- [x] Implement document storage in MongoDB
+- [x] Develop document parsing and processing
+- [x] Build document context integration with chat
 
 ### URL Context System
 
-- [ ] Implement URL saving functionality
-- [ ] Create URL content extraction and processing
-- [ ] Develop URL context storage in MongoDB
-- [ ] Build URL context integration with chat
+- [x] Implement URL saving functionality
+- [x] Create URL content extraction and processing
+- [x] Develop URL context storage in MongoDB
+- [x] Build URL context integration with chat
 
 ### Core Function Implementation
 

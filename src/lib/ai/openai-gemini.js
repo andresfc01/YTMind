@@ -7,6 +7,20 @@ const openai = new OpenAI({
   baseURL: "https://generativelanguage.googleapis.com/v1beta/openai/",
 });
 
+// Default system message for Markdown formatting
+const MARKDOWN_SYSTEM_MESSAGE = {
+  role: "system",
+  content:
+    "When appropriate and relevant, format your responses using Markdown to enhance readability. Use headers, lists, code blocks, bold, italic, and other Markdown formatting features to structure your responses and make information easier to understand. However, only use formatting when it adds value to the response.",
+};
+
+// Default system message for step-by-step thinking with XML tags
+const THINKING_SYSTEM_MESSAGE = {
+  role: "system",
+  content:
+    "Always Use Chain of Draft reasoning inside <think> tags to solve problems. Always Start with a <script> XML tag followed by a brief outline of your approach - use concise steps (5-7 words per step) to frame your thinking. Then, expand on the most critical points with more detail, showing your reasoning process. Use line breaks between steps for clarity. After completing your reasoning with a </think> tag, provide your final, polished answer.\n\nExample:\n<think>\nStep 1: Identify problem type.\nStep 2: Consider relevant information.\nStep 3: Apply appropriate framework.\n\nFor step 1: This appears to be an optimization problem requiring trade-off analysis between multiple factors including cost, time, and resource allocation.\n\nFor step 3: Using constraint satisfaction approach because we need to balance competing requirements while maximizing overall utility.\n</think> [your final response]",
+};
+
 /**
  * Envía un mensaje de chat a Gemini 2.0 Flash y obtiene una respuesta sin streaming
  * @param {Array} messages - Array de objetos de mensaje con role and content
@@ -75,6 +89,7 @@ export async function streamChatWithGemini(messages, options = {}) {
 
     try {
       const stream = await openai.chat.completions.create(requestOptions);
+
       return stream;
     } catch (error) {
       console.error("Error en la llamada a la API de Gemini:", error);
@@ -157,6 +172,24 @@ function convertToOpenAIFormat(messages) {
     });
   }
 
+  // Always add the Markdown formatting system message if it doesn't already exist
+  const hasMarkdownInstruction = formattedMessages.some(
+    (msg) => msg.role === "system" && msg.content.includes("format your responses using Markdown")
+  );
+
+  if (!hasMarkdownInstruction) {
+    formattedMessages.push(MARKDOWN_SYSTEM_MESSAGE);
+  }
+
+  // Always add the thinking process system message if it doesn't already exist
+  const hasThinkingInstruction = formattedMessages.some(
+    (msg) => msg.role === "system" && msg.content.includes("<think>")
+  );
+
+  if (!hasThinkingInstruction) {
+    formattedMessages.push(THINKING_SYSTEM_MESSAGE);
+  }
+
   // Luego añadimos el resto de mensajes
   otherMessages.forEach((msg) => {
     // Si es un mensaje de función, asegurarnos de que tenga el formato correcto
@@ -202,11 +235,30 @@ function convertToOpenAIFormat(messages) {
  */
 export async function processStreamToText(stream) {
   let fullText = "";
+  let totalCompletionTokens = 0;
+  let registeredInitialUsage = false;
 
   for await (const chunk of stream) {
+    // Registrar una estimación inicial de uso al recibir el primer chunk
+    if (!registeredInitialUsage) {
+      // Registrar una estimación inicial mínima
+      registeredInitialUsage = true;
+      console.log("[Usage Tracker] Registrada estimación inicial al comenzar el stream");
+    }
+
     const content = chunk.choices[0]?.delta?.content || "";
     fullText += content;
+
+    // Estimación aproximada: cada token es aproximadamente 4 caracteres
+    // Esta es una estimación muy cruda y debe ser refinada
+    if (content) {
+      totalCompletionTokens += Math.ceil(content.length / 4);
+    }
   }
+
+  // Registrar una estimación del uso
+  // Nota: esto es una estimación muy aproximada
+  const estimatedPromptTokens = Math.ceil(fullText.length / 8); // Esto es solo una estimación
 
   return fullText;
 }
@@ -218,16 +270,33 @@ export async function processStreamToText(stream) {
  */
 export function createReadableStream(stream) {
   const encoder = new TextEncoder();
+  let totalCompletionTokens = 0;
+  let registeredInitialUsage = false;
 
   return new ReadableStream({
     async start(controller) {
       try {
         for await (const chunk of stream) {
           const content = chunk.choices[0]?.delta?.content || "";
+
+          // Registrar una estimación inicial de uso al recibir el primer chunk
+          if (!registeredInitialUsage) {
+            // Registrar una estimación inicial mínima
+            registeredInitialUsage = true;
+            console.log("[Usage Tracker] Registrada estimación inicial al comenzar el stream");
+          }
+
           if (content) {
             controller.enqueue(encoder.encode(content));
+
+            // Estimación aproximada: cada token es aproximadamente 4 caracteres
+            totalCompletionTokens += Math.ceil(content.length / 4);
           }
         }
+
+        // Registrar una estimación más precisa del uso al finalizar el stream
+        const estimatedPromptTokens = Math.ceil(totalCompletionTokens * 0.8); // Esto es solo una estimación
+
         controller.close();
       } catch (error) {
         controller.error(error);
@@ -244,15 +313,26 @@ export function createReadableStream(stream) {
  */
 export async function processStreamWithFunctionCalls(stream, onContent, onFunctionCall) {
   let toolCallData = null;
+  let totalCompletionTokens = 0;
+  let registeredInitialUsage = false;
 
   try {
     for await (const chunk of stream) {
       console.log("Chunk recibido:", JSON.stringify(chunk, null, 2));
 
+      // Registrar una estimación inicial de uso al recibir el primer chunk
+      if (!registeredInitialUsage) {
+        // Registrar una estimación inicial mínima
+        registeredInitialUsage = true;
+        console.log("[Usage Tracker] Registrada estimación inicial al comenzar el stream");
+      }
+
       // Manejar contenido normal
       const content = chunk.choices[0]?.delta?.content || "";
       if (content) {
         onContent(content);
+        // Estimación aproximada de tokens
+        totalCompletionTokens += Math.ceil(content.length / 4);
       }
 
       // Detectar llamadas a herramientas (funciones)

@@ -16,6 +16,7 @@ export default function ChatContainer({
   agents = [],
   selectedAgentId = null,
   onSelectAgent = () => {},
+  onEditMessage = null,
   children,
 }) {
   const messagesEndRef = useRef(null);
@@ -62,21 +63,28 @@ export default function ChatContainer({
     }
   };
 
+  // Manejador para editar un mensaje específico
+  const handleEditMessage = (index, newContent) => {
+    if (onEditMessage && typeof onEditMessage === "function") {
+      onEditMessage(index, newContent);
+    }
+  };
+
   return (
     <div className="flex h-full flex-col">
       {/* Welcome screen or messages */}
-      <div className="flex-1 overflow-y-auto px-4 sm:px-6">
+      <div className="flex-1 overflow-y-auto">
         {messages.length === 0 ? (
           // Welcome screen with improved visual hierarchy
-          <div className="flex h-full flex-col items-center justify-center">
-            <div className="w-full max-w-lg space-y-6">
+          <div className="flex h-full flex-col items-center justify-center px-4 sm:px-6">
+            <div className="w-full max-w-lg space-y-8">
               <div className="text-center">
-                <h1 className="mb-2 text-4xl font-semibold text-[#1a1a1a]">YTMind</h1>
+                <h1 className="mb-3 text-4xl font-semibold text-[#1a1a1a]">YTMind</h1>
                 <p className="text-sm text-[#666666]">Tu asistente personal para análisis de YouTube</p>
               </div>
 
               <div className="rounded-lg border border-[#e5e5e5] bg-[#f9f9f9] p-6">
-                <h2 className="mb-4 text-center text-lg font-medium text-[#1a1a1a]">Sistema</h2>
+                <h2 className="mb-5 text-center text-lg font-medium text-[#1a1a1a]">Sistema</h2>
                 <textarea
                   value={systemPrompt}
                   onChange={handleSystemPromptChange}
@@ -90,8 +98,8 @@ export default function ChatContainer({
               </div>
 
               <div>
-                <h2 className="mb-4 text-center text-lg font-medium text-[#1a1a1a]">Ejemplos</h2>
-                <div className="grid gap-3">
+                <h2 className="mb-5 text-center text-lg font-medium text-[#1a1a1a]">Ejemplos</h2>
+                <div className="grid gap-4">
                   <button
                     className="rounded-lg border border-[#e5e5e5] bg-white p-4 text-left text-[#1a1a1a] transition-colors hover:bg-[#f5f5f5]"
                     onClick={() => onExampleClick("Analiza las tendencias actuales en contenido de YouTube.")}
@@ -112,33 +120,38 @@ export default function ChatContainer({
           </div>
         ) : (
           // Messages list with improved spacing
-          <>
+          <div className="px-2 sm:px-4">
             {children ? (
               <>
                 {children}
                 <div ref={messagesEndRef} />
               </>
             ) : (
-              <div className="pb-32 pt-5">
+              <div className="pb-32 pt-3">
                 {messages.map((msg, index) => (
-                  <div key={index} className="mb-8 last:mb-0">
-                    <ChatMessage role={msg.role} content={msg.content} isFunctionCall={msg.isFunctionCall || false} />
+                  <div key={index} className="mb-4 last:mb-2">
+                    <ChatMessage
+                      role={msg.role}
+                      content={msg.content}
+                      isFunctionCall={msg.isFunctionCall || false}
+                      onEditMessage={onEditMessage ? (newContent) => handleEditMessage(index, newContent) : null}
+                    />
                   </div>
                 ))}
                 {partialResponse && (
-                  <div className="mb-8">
+                  <div className="mb-4">
                     <ChatMessage role="assistant" content={partialResponse} isPartial={true} />
                   </div>
                 )}
                 {isLoading && (
-                  <div className="my-8 flex w-full justify-center">
-                    <div className="h-8 w-8 animate-spin rounded-full border-2 border-[#e5e5e5] border-t-[#666666]"></div>
+                  <div className="my-4 flex w-full justify-center">
+                    <div className="h-6 w-6 animate-spin rounded-full border-2 border-[#e5e5e5] border-t-[#666666]"></div>
                   </div>
                 )}
                 <div ref={messagesEndRef} />
               </div>
             )}
-          </>
+          </div>
         )}
       </div>
 
