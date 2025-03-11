@@ -71,6 +71,12 @@ YTMind follows a modern web application architecture with the following componen
       usedAgentId: ObjectId // Reference to agent used for this specific message (optional)
     }
   ],
+  contextIds: [
+    {
+      type: String, // 'document' or 'url'
+      id: ObjectId // Reference to a Document or URL
+    }
+  ],
   createdAt: Date,
   updatedAt: Date,
   model: String // AI model used for this chat
@@ -90,7 +96,8 @@ YTMind follows a modern web application architecture with the following componen
     {
       name: String,
       description: String,
-      parameters: Object // JSON Schema for function parameters
+      parameters: Object, // JSON Schema for function parameters
+      implementation: String // Reference to function implementation in the codebase
     }
   ],
   usesAgents: [
@@ -103,7 +110,9 @@ YTMind follows a modern web application architecture with the following componen
   category: String, // e.g., 'analysis', 'content', 'seo'
   createdAt: Date,
   updatedAt: Date,
-  isDefault: Boolean // Whether this is a default agent
+  isDefault: Boolean, // Whether this is a default agent
+  contextDocuments: [ObjectId], // References to Document objects
+  contextUrls: [ObjectId] // References to URL objects
 }
 ```
 
@@ -208,7 +217,46 @@ YTMind follows a modern web application architecture with the following componen
     tags: [String], // User-defined tags
     description: String // Document description
   },
+  processingStatus: String, // 'pending', 'processed', 'failed'
+  processingResults: {
+    chunks: [
+      {
+        content: String,
+        index: Number
+      }
+    ],
+    summary: String
+  },
   uploadedAt: Date,
+  createdAt: Date,
+  updatedAt: Date
+}
+```
+
+### URL
+
+```javascript
+{
+  _id: ObjectId,
+  url: String,
+  title: String,
+  content: String, // Extracted content from the URL
+  metadata: {
+    domain: String,
+    tags: [String], // User-defined tags
+    description: String
+  },
+  processingStatus: String, // 'pending', 'processed', 'failed'
+  processingResults: {
+    chunks: [
+      {
+        content: String,
+        index: Number
+      }
+    ],
+    summary: String
+  },
+  addedAt: Date,
   createdAt: Date,
   updatedAt: Date
 }
@@ -247,6 +295,15 @@ YTMind follows a modern web application architecture with the following componen
 - `GET /api/documents` - Get all documents
 - `GET /api/documents/:id` - Get a specific document
 - `DELETE /api/documents/:id` - Delete a document
+- `POST /api/documents/:id/process` - Process a document for context use
+
+### URL Endpoints
+
+- `POST /api/urls` - Add a new URL
+- `GET /api/urls` - Get all URLs
+- `GET /api/urls/:id` - Get a specific URL
+- `DELETE /api/urls/:id` - Delete a URL
+- `POST /api/urls/:id/process` - Process a URL for context use
 
 ## External Services
 
@@ -262,7 +319,30 @@ YTMind follows a modern web application architecture with the following componen
 
 ## Data Flow
 
-1. **Channel Analysis Flow**
+1. **Document Context Flow**
+
+   - User uploads a document via the UI
+   - System stores document in MongoDB
+   - Document is processed for context use (chunking, indexing)
+   - User can assign document to an agent as context
+   - During chat, document context is provided to the AI model
+
+2. **URL Context Flow**
+
+   - User adds a URL via the UI
+   - System fetches and extracts content from the URL
+   - URL content is processed for context use (chunking, indexing)
+   - User can assign URL to an agent as context
+   - During chat, URL context is provided to the AI model
+
+3. **Function Implementation Flow**
+
+   - Developer creates function implementations in the codebase
+   - Functions are made available for assignment to agents
+   - User creates or modifies agent, assigning functions
+   - During chat, agent can execute assigned functions
+
+4. **Channel Analysis Flow**
 
    - User requests channel analysis via chat
    - System fetches channel data from YouTube API
@@ -270,22 +350,23 @@ YTMind follows a modern web application architecture with the following componen
    - AI generates analysis summary
    - Results are presented to user in chat
 
-2. **Content Generation Flow**
+5. **Content Generation Flow**
 
    - User requests content generation
    - System retrieves relevant channel/video data from MongoDB
    - AI generates content based on stored data and user request
    - Generated content is presented to user in chat
 
-3. **Agent Interaction Flow**
+6. **Agent Interaction Flow**
 
    - User selects or creates an agent
-   - System loads agent configuration
+   - System loads agent configuration and context
    - User interacts with the agent via chat
+   - Agent executes functions as needed
    - Agent may use other specialized agents for specific tasks
-   - Agent responses are based on its specialized configuration and functions
+   - Agent responses are based on its specialized configuration, functions, and context
 
-4. **Multi-Agent Collaboration Flow**
+7. **Multi-Agent Collaboration Flow**
 
    - Primary agent receives user request
    - Primary agent determines if specialized agents are needed

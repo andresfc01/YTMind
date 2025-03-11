@@ -27,7 +27,32 @@ This roadmap outlines the phased approach to developing YTMind, focusing on deli
 - [x] Set up basic conversation flow with Gemini
 - [x] Add chat history listing and selection
 
-## Phase 2: Agent System (Weeks 3-4)
+## Phase 2: Context System & Core Functions (Weeks 3-4)
+
+### Document Context System
+
+- [ ] Create document upload interface
+- [ ] Implement document storage in MongoDB
+- [ ] Develop document parsing and processing
+- [ ] Build document context integration with chat
+
+### URL Context System
+
+- [ ] Implement URL saving functionality
+- [ ] Create URL content extraction and processing
+- [ ] Develop URL context storage in MongoDB
+- [ ] Build URL context integration with chat
+
+### Core Function Implementation
+
+- [ ] Design function architecture and interfaces
+- [ ] Implement YouTube data retrieval functions
+- [ ] Create content analysis functions
+- [ ] Build idea generation utilities
+- [ ] Develop script writing helpers
+- [ ] Implement SEO optimization functions
+
+## Phase 3: Agent System (Weeks 5-6)
 
 ### Agent Framework
 
@@ -36,20 +61,21 @@ This roadmap outlines the phased approach to developing YTMind, focusing on deli
 - [x] Implement agent creation and editing
 - [x] Develop agent selection in chat interface
 
-### Core Agents
+### Function Integration with Agents
 
-- [ ] Implement Channel Analyst agent
-- [ ] Develop Video Idea Generator agent
-- [ ] Create Script Writer agent
-- [ ] Build basic prompt templates for each agent
+- [ ] Create function assignment system for agents
+- [ ] Implement function execution within chat context
+- [ ] Develop agent-specific function configurations
+- [ ] Build function feedback and improvement system
 
-### Agent Storage
+### Specialized Agents
 
-- [x] Set up MongoDB collections for agents
-- [x] Create API endpoints for agent operations
-- [x] Implement agent persistence and retrieval
+- [ ] Implement Channel Analyst agent with appropriate functions
+- [ ] Develop Video Idea Generator agent with appropriate functions
+- [ ] Create Script Writer agent with appropriate functions
+- [ ] Implement basic prompt templates for each agent
 
-## Phase 3: YouTube Integration (Weeks 5-6)
+## Phase 4: YouTube Integration (Weeks 7-8)
 
 ### YouTube Data API Integration
 
@@ -72,21 +98,14 @@ This roadmap outlines the phased approach to developing YTMind, focusing on deli
 - [ ] Develop video data storage in MongoDB
 - [ ] Build video search and filtering
 
-## Phase 4: Knowledge Base (Weeks 7-8)
-
-### Document Management
-
-- [ ] Create document upload interface
-- [ ] Implement document storage in MongoDB
-- [ ] Develop document retrieval system
-- [ ] Build document type categorization
+## Phase 5: Knowledge Base Enhancement (Weeks 9-10)
 
 ### Knowledge Integration
 
-- [ ] Implement knowledge reference in chat
-- [ ] Create context-aware responses
-- [ ] Develop knowledge base search
+- [ ] Improve context-aware responses
+- [ ] Develop advanced knowledge base search
 - [ ] Build knowledge visualization
+- [ ] Create intelligent knowledge suggestions
 
 ### Data Relationships
 
@@ -95,7 +114,7 @@ This roadmap outlines the phased approach to developing YTMind, focusing on deli
 - [ ] Create relationships between entities
 - [ ] Implement cross-referencing in chat
 
-## Phase 5: Advanced Features (Weeks 9-10)
+## Phase 6: Advanced Features (Weeks 11-12)
 
 ### Model Switching
 
@@ -146,12 +165,13 @@ This roadmap outlines the phased approach to developing YTMind, focusing on deli
 
 The MVP will be considered successful when it can:
 
-1. Analyze YouTube channels and extract meaningful insights
-2. Generate useful video ideas based on competitor analysis
-3. Create detailed scripts for different content types
-4. Suggest thumbnail concepts and SEO optimizations
-5. Store and reference knowledge across conversations
-6. Provide a smooth, intuitive user experience
+1. Process and utilize documents and URLs as context in conversations
+2. Execute core functions for YouTube content creation assistance
+3. Analyze YouTube channels and extract meaningful insights
+4. Generate useful video ideas based on competitor analysis
+5. Create detailed scripts for different content types
+6. Suggest thumbnail concepts and SEO optimizations
+7. Provide a smooth, intuitive user experience
 
 ## Resource Requirements
 

@@ -2,13 +2,64 @@
 
 ## Overview
 
-YTMind utilizes specialized AI agents to provide targeted assistance for different aspects of YouTube content creation. Each agent is configured with specific system prompts and knowledge to excel in its domain.
+YTMind utilizes specialized AI agents to provide targeted assistance for different aspects of YouTube content creation. Each agent is configured with specific system prompts, functions, and context to excel in its domain.
+
+## Core Functions
+
+Before specialized agents are created, YTMind implements a set of core functions that agents can use:
+
+### YouTube Data Functions
+
+- **channelInfo**: Fetch basic information about a YouTube channel
+- **channelVideos**: Get videos from a specific channel
+- **videoDetails**: Retrieve detailed information about a video
+- **channelComparison**: Compare statistics between multiple channels
+
+### Content Analysis Functions
+
+- **topicExtraction**: Extract main topics from video content
+- **styleAnalysis**: Analyze visual and communication style
+- **audienceAnalysis**: Identify likely target audience
+- **trendAnalysis**: Detect trending topics in a niche
+
+### Content Generation Functions
+
+- **ideaGeneration**: Generate video ideas based on inputs
+- **scriptOutlining**: Create structured outlines for videos
+- **scriptWriting**: Generate complete scripts with hooks and CTAs
+- **thumbnailConcept**: Describe effective thumbnail designs
+- **seoOptimization**: Generate SEO metadata for videos
+
+## Context Systems
+
+Agents can utilize two types of context:
+
+### Document Context
+
+- User-uploaded documents that provide reference material
+- Documents are processed and made available to agents during chat
+- Examples: scripts, video notes, brand guidelines
+
+### URL Context
+
+- User-saved URLs that provide reference material
+- Content from URLs is extracted, processed, and made available to agents
+- Examples: competitor videos, industry articles, trend reports
 
 ## Core Agents
 
 ### 1. Channel Analyst Agent
 
 **Purpose**: Analyze YouTube channels to extract valuable insights.
+
+**Core Functions Used**:
+
+- channelInfo
+- channelVideos
+- topicExtraction
+- styleAnalysis
+- audienceAnalysis
+- channelComparison
 
 **Capabilities**:
 
@@ -29,6 +80,12 @@ YTMind utilizes specialized AI agents to provide targeted assistance for differe
 
 **Purpose**: Generate creative and trending video ideas based on channel analysis.
 
+**Core Functions Used**:
+
+- channelVideos
+- trendAnalysis
+- ideaGeneration
+
 **Capabilities**:
 
 - Create video concepts based on trending topics
@@ -46,6 +103,12 @@ YTMind utilizes specialized AI agents to provide targeted assistance for differe
 ### 3. Script Writer
 
 **Purpose**: Create detailed video scripts optimized for engagement.
+
+**Core Functions Used**:
+
+- scriptOutlining
+- scriptWriting
+- seoOptimization
 
 **Capabilities**:
 
@@ -65,6 +128,11 @@ YTMind utilizes specialized AI agents to provide targeted assistance for differe
 
 **Purpose**: Generate thumbnail concepts and descriptions (not the actual images).
 
+**Core Functions Used**:
+
+- thumbnailConcept
+- styleAnalysis
+
 **Capabilities**:
 
 - Describe effective thumbnail layouts
@@ -82,6 +150,12 @@ YTMind utilizes specialized AI agents to provide targeted assistance for differe
 ### 5. SEO Optimizer
 
 **Purpose**: Optimize video metadata for discoverability.
+
+**Core Functions Used**:
+
+- seoOptimization
+- topicExtraction
+- trendAnalysis
 
 **Capabilities**:
 
@@ -102,9 +176,11 @@ YTMind utilizes specialized AI agents to provide targeted assistance for differe
 Users can create custom agents tailored to specific needs:
 
 1. **Define Purpose**: Clearly state what the agent should specialize in
-2. **Create System Prompt**: Write a detailed prompt that guides the agent's behavior
-3. **Select Model**: Choose the AI model that best fits the agent's purpose
-4. **Test and Refine**: Iterate on the agent's configuration based on performance
+2. **Select Functions**: Choose which core functions the agent should use
+3. **Add Context**: Upload documents or add URLs as reference material
+4. **Create System Prompt**: Write a detailed prompt that guides the agent's behavior
+5. **Select Model**: Choose the AI model that best fits the agent's purpose
+6. **Test and Refine**: Iterate on the agent's configuration based on performance
 
 ## Agent Collaboration
 
