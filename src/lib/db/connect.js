@@ -27,9 +27,6 @@ if (baseUri.includes("?")) {
 // Construir la URI final con la base de datos especificada
 const uri = `${baseUri}/${DB_NAME}${queryParams}`;
 
-console.log("Intentando conectar a MongoDB con URI:", uri.replace(/:[^\/]+@/, ":****@")); // Ocultar la contraseña
-console.log("Base de datos seleccionada:", DB_NAME);
-
 /**
  * Global is used here to maintain a cached connection across hot reloads
  * in development. This prevents connections growing exponentially
@@ -43,7 +40,6 @@ if (!cached) {
 
 async function connectToDatabase() {
   if (cached.conn) {
-    console.log("Usando conexión en caché a MongoDB");
     return cached.conn;
   }
 
@@ -53,12 +49,7 @@ async function connectToDatabase() {
       dbName: DB_NAME, // Especificar explícitamente el nombre de la base de datos
     };
 
-    console.log("Estableciendo nueva conexión a MongoDB");
     cached.promise = mongoose.connect(uri, opts).then((mongoose) => {
-      console.log(`Conectado a MongoDB. Base de datos: ${mongoose.connection.db.databaseName}`);
-      console.log(
-        `Colecciones disponibles: ${Object.keys(mongoose.connection.collections).join(", ") || "ninguna todavía"}`
-      );
       return mongoose;
     });
   }
@@ -80,8 +71,6 @@ export async function listDatabases() {
     const conn = await connectToDatabase();
     const admin = conn.connection.db.admin();
     const result = await admin.listDatabases();
-    console.log("Bases de datos disponibles:", result.databases.map((db) => db.name).join(", "));
-    console.log("Base de datos actual:", conn.connection.db.databaseName);
     return result.databases;
   } catch (error) {
     console.error("Error al listar bases de datos:", error);

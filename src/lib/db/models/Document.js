@@ -47,9 +47,4 @@ documentSchema.pre("save", function (next) {
 // Verificamos si el modelo ya existe para evitar errores de sobredefinición
 const Document = mongoose.models.Document || mongoose.model("Document", documentSchema);
 
-// Log para depuración
-console.log(
-  `Modelo Document inicializado. Base de datos actual: ${mongoose.connection.db?.databaseName || "no conectado aún"}`
-);
-
 export default Document;

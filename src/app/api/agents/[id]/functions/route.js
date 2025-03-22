@@ -24,9 +24,6 @@ export async function GET(request, context) {
     // Obtener las funciones del agente
     const functions = agent.functions || [];
 
-    console.log(`GET funciones del agente ${id}: ${agent.name}`);
-    console.log(`El agente tiene ${functions.length} funciones:`, functions);
-
     // Asegurarnos de que cada función tenga todos sus campos
     const formattedFunctions = functions.map((func) => {
       // Si es un objeto completo, lo usamos directamente
@@ -79,8 +76,6 @@ export async function POST(request, context) {
     const body = await request.json();
     const { functions } = body;
 
-    console.log(`POST /api/agents/${id}/functions - Received functions:`, functions);
-
     if (!Array.isArray(functions) || functions.length === 0) {
       console.error("Invalid functions data:", functions);
       return NextResponse.json({ error: "Se requiere un array de nombres de funciones" }, { status: 400 });
@@ -91,13 +86,10 @@ export async function POST(request, context) {
     const validFunctions = [];
 
     for (const funcName of functions) {
-      console.log(`Checking function: ${funcName}`);
       const func = getFunctionByName(funcName);
       if (!func) {
-        console.error(`Function not found: ${funcName}`);
         invalidFunctions.push(funcName);
       } else {
-        console.log(`Function found: ${funcName}`);
         validFunctions.push(funcName); // Enviamos solo el nombre, el repositorio se encargará de obtener los detalles
       }
     }
@@ -130,14 +122,10 @@ export async function POST(request, context) {
       );
     }
 
-    console.log(`Updating agent ${id} with functions:`, validFunctions);
-
     // Actualizar las funciones
     const updatedAgent = await AgentRepository.update(id, {
       functions: validFunctions,
     });
-
-    console.log(`Agent ${id} updated with functions. New functions:`, updatedAgent.functions);
 
     return NextResponse.json({
       message: "Funciones asignadas correctamente",

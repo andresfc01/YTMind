@@ -74,7 +74,6 @@ export async function POST(request, context) {
       content,
     };
 
-    console.log("Creando URL con datos:", JSON.stringify(urlData));
     const url = await UrlRepository.create(urlData);
 
     // Añadir la referencia de la URL al agente

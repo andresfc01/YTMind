@@ -30,7 +30,6 @@ export async function GET() {
     try {
       if (mongoose.models.Chat) {
         chatCount = await mongoose.models.Chat.countDocuments();
-        console.log(`Número de chats encontrados: ${chatCount}`);
       }
     } catch (e) {
       console.error("Error al contar documentos en Chat:", e);

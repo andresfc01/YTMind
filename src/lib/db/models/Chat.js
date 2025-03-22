@@ -3,7 +3,7 @@ import mongoose from "mongoose";
 const messageSchema = new mongoose.Schema({
   role: {
     type: String,
-    enum: ["user", "assistant", "system"],
+    enum: ["user", "assistant", "system", "function", "tool"],
     required: true,
   },
   content: {
@@ -18,6 +18,17 @@ const messageSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: "Agent",
     required: false,
+  },
+  // For function/tool messages
+  name: {
+    type: String,
+    required: false,
+  },
+  // For indicating function calls in the UI
+  isFunctionCall: {
+    type: Boolean,
+    required: false,
+    default: false,
   },
 });
 
@@ -57,10 +68,5 @@ chatSchema.pre("save", function (next) {
 
 // Verificamos si el modelo ya existe para evitar errores de sobredefinición
 const Chat = mongoose.models.Chat || mongoose.model("Chat", chatSchema);
-
-// Log para depuración
-console.log(
-  `Modelo Chat inicializado. Base de datos actual: ${mongoose.connection.db?.databaseName || "no conectado aún"}`
-);
 
 export default Chat;

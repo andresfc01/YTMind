@@ -10,25 +10,27 @@ Before specialized agents are created, YTMind implements a set of core functions
 
 ### YouTube Data Functions
 
-- **channelInfo**: Fetch basic information about a YouTube channel
-- **channelVideos**: Get videos from a specific channel
-- **videoDetails**: Retrieve detailed information about a video
-- **channelComparison**: Compare statistics between multiple channels
+- **getChannelInfo**: Fetch basic information about a YouTube channel
+- **listChannelVideos**: Get videos from a specific channel
+- **getVideoDetails**: Retrieve detailed information about a video (including script)
+- **compareChannels**: Compare statistics between multiple channels
+- **analyzeComments**: Extract and analyze relevant comments from videos
 
 ### Content Analysis Functions
 
-- **topicExtraction**: Extract main topics from video content
-- **styleAnalysis**: Analyze visual and communication style
-- **audienceAnalysis**: Identify likely target audience
-- **trendAnalysis**: Detect trending topics in a niche
+- **analyzeTitle**: Evaluate title effectiveness and optimization
+- **analyzeScript**: Examine script structure and engagement elements
+- **analyzeThumbnail**: Assess thumbnail design and effectiveness
+- **analyzeChannel**: Comprehensive channel analysis
 
 ### Content Generation Functions
 
-- **ideaGeneration**: Generate video ideas based on inputs
-- **scriptOutlining**: Create structured outlines for videos
-- **scriptWriting**: Generate complete scripts with hooks and CTAs
-- **thumbnailConcept**: Describe effective thumbnail designs
-- **seoOptimization**: Generate SEO metadata for videos
+- **generateVideoIdeas**: Create video ideas based on popular videos from referenced channels
+- **generateTitles**: Produce optimized titles for videos
+- **generateHooks**: Create compelling hooks for videos
+- **generateCompleteScript**: Create full scripts based on video concepts
+- **designThumbnailConcept**: Describe effective thumbnail designs
+- **recommendChannelImprovements**: Suggest optimization strategies for channels
 
 ## Context Systems
 
@@ -54,12 +56,12 @@ Agents can utilize two types of context:
 
 **Core Functions Used**:
 
-- channelInfo
-- channelVideos
-- topicExtraction
-- styleAnalysis
-- audienceAnalysis
-- channelComparison
+- getChannelInfo
+- listChannelVideos
+- analyzeChannel
+- compareChannels
+- analyzeComments
+- recommendChannelImprovements
 
 **Capabilities**:
 
@@ -82,9 +84,9 @@ Agents can utilize two types of context:
 
 **Core Functions Used**:
 
-- channelVideos
-- trendAnalysis
-- ideaGeneration
+- listChannelVideos
+- generateVideoIdeas
+- analyzeChannel
 
 **Capabilities**:
 
@@ -106,9 +108,9 @@ Agents can utilize two types of context:
 
 **Core Functions Used**:
 
-- scriptOutlining
-- scriptWriting
-- seoOptimization
+- generateHooks
+- generateCompleteScript
+- analyzeScript
 
 **Capabilities**:
 
@@ -130,8 +132,8 @@ Agents can utilize two types of context:
 
 **Core Functions Used**:
 
-- thumbnailConcept
-- styleAnalysis
+- designThumbnailConcept
+- analyzeThumbnail
 
 **Capabilities**:
 
@@ -153,9 +155,9 @@ Agents can utilize two types of context:
 
 **Core Functions Used**:
 
-- seoOptimization
-- topicExtraction
-- trendAnalysis
+- analyzeTitle
+- generateTitles
+- getVideoDetails
 
 **Capabilities**:
 

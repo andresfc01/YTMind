@@ -64,6 +64,10 @@ src/app/api/
 │   ├── route.js           # GET, POST handlers
 │   └── [id]/              # Chat-specific operations
 │       └── route.js       # GET, DELETE handlers
+├── context-groups/        # Context group management endpoints
+│   ├── route.js           # GET, POST handlers
+│   └── [id]/              # Context group-specific operations
+│       └── route.js       # GET, PUT, DELETE handlers
 ├── documents/             # Document management endpoints
 │   ├── route.js           # GET, POST handlers
 │   └── [id]/              # Document-specific operations
@@ -95,6 +99,12 @@ src/components/
 │   ├── ChatMessage.jsx    # Individual chat message
 │   ├── ChatMessages.jsx   # Chat message container
 │   └── ChatSidebar.jsx    # Chat history sidebar
+├── context-groups/        # Context group-related components
+│   ├── ContextGroupCard.jsx   # Context group display card
+│   ├── ContextGroupForm.jsx   # Context group creation/editing form
+│   ├── ContextGroupItem.jsx   # Individual item in a context group
+│   ├── ContextGroupList.jsx   # List of available context groups
+│   └── ContextGroupSelector.jsx # Context group selection component
 ├── layout/                # Layout components
 │   ├── Header.jsx         # Application header
 │   ├── MainLayout.jsx     # Main application layout
@@ -121,6 +131,7 @@ src/lib/
 ├── api/                   # API client functions
 │   ├── agents.js          # Agent API functions
 │   ├── chat.js            # Chat API functions
+│   ├── context-groups.js  # Context group API functions
 │   ├── documents.js       # Document API functions
 │   └── youtube.js         # YouTube API functions
 ├── db/                    # Database utilities
@@ -148,6 +159,7 @@ src/models/
 ├── Agent.js               # Agent model
 ├── Channel.js             # YouTube channel model
 ├── Chat.js                # Chat model
+├── ContextGroup.js        # Context group model
 ├── Document.js            # Document model
 └── Video.js               # YouTube video model
 ```

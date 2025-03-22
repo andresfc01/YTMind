@@ -13,6 +13,7 @@ const AgentList = ({
   onEditAgent,
   onDeleteAgent,
   onCreateAgent,
+  onCreateNewChatWithAgent,
 }) => {
   return (
     <div className="space-y-2">
@@ -22,7 +23,13 @@ const AgentList = ({
           key={agent.id}
           agent={agent}
           isSelected={agent.id === selectedAgentId}
-          onSelect={() => onSelectAgent(agent)}
+          onSelect={() => {
+            if (onCreateNewChatWithAgent) {
+              onCreateNewChatWithAgent(agent.id);
+            } else {
+              onSelectAgent(agent);
+            }
+          }}
           onEdit={() => onEditAgent(agent)}
           onDelete={() => onDeleteAgent(agent.id)}
         />

@@ -12,7 +12,6 @@ class ChatRepository {
    */
   static async _verifyConnection() {
     await connectToDatabase();
-    console.log(`Operación en base de datos: ${mongoose.connection.db.databaseName}`);
   }
 
   /**
@@ -23,7 +22,6 @@ class ChatRepository {
   static async create(chatData) {
     await this._verifyConnection();
     const chat = new Chat(chatData);
-    console.log(`Creando chat "${chatData.title}" en ${mongoose.connection.db.databaseName}`);
     await chat.save();
     return chat;
   }
@@ -36,7 +34,6 @@ class ChatRepository {
    */
   static async findAll(filter = {}, options = { sort: { createdAt: -1 } }) {
     await this._verifyConnection();
-    console.log(`Buscando chats en ${mongoose.connection.db.databaseName}`);
     return Chat.find(filter, null, options);
   }
 
@@ -47,7 +44,6 @@ class ChatRepository {
    */
   static async findById(id) {
     await this._verifyConnection();
-    console.log(`Buscando chat ${id} en ${mongoose.connection.db.databaseName}`);
     return Chat.findById(id);
   }
 
@@ -59,7 +55,6 @@ class ChatRepository {
    */
   static async update(id, updateData) {
     await this._verifyConnection();
-    console.log(`Actualizando chat ${id} en ${mongoose.connection.db.databaseName}`);
     return Chat.findByIdAndUpdate(id, updateData, { new: true });
   }
 
@@ -72,22 +67,62 @@ class ChatRepository {
   static async addMessage(chatId, message) {
     await this._verifyConnection();
 
-    // Validar que el rol sea válido
-    if (!["user", "assistant", "system"].includes(message.role)) {
-      throw new Error(`Rol no válido: ${message.role}`);
+    // Validate chatId
+    if (!chatId || chatId === "null" || chatId === "undefined") {
+      throw new Error("Invalid chat ID");
+    }
+
+    // Validate message object
+    if (!message || typeof message !== "object") {
+      throw new Error("Message must be a valid object");
+    }
+
+    // Validate role
+    const validRoles = ["user", "assistant", "system", "function", "tool"];
+    if (!message.role || !validRoles.includes(message.role)) {
+      throw new Error(`Invalid role: ${message.role}. Must be one of: ${validRoles.join(", ")}`);
+    }
+
+    // Ensure content is a string
+    if (message.content === undefined || message.content === null) {
+      throw new Error("Message content cannot be null or undefined");
+    }
+
+    // Create a formatted message with only the necessary properties
+    const formattedMessage = {
+      role: message.role,
+      content: String(message.content),
+      timestamp: message.timestamp || new Date(),
+    };
+
+    // Add additional properties for function/tool messages
+    if (message.role === "function" || message.role === "tool") {
+      if (message.name) {
+        formattedMessage.name = message.name;
+      }
+    }
+
+    // Add isFunctionCall flag if present
+    if (message.isFunctionCall) {
+      formattedMessage.isFunctionCall = Boolean(message.isFunctionCall);
     }
 
     try {
       const result = await Chat.findByIdAndUpdate(
         chatId,
         {
-          $push: { messages: message },
+          $push: { messages: formattedMessage },
           $set: { updatedAt: new Date() },
         },
         { new: true }
       );
 
-      return result || null;
+      if (!result) {
+        console.warn(`No chat found with ID: ${chatId}`);
+        return null;
+      }
+
+      return result;
     } catch (error) {
       console.error(`Error al añadir mensaje a chat ${chatId}:`, error);
       throw error;
@@ -101,7 +136,6 @@ class ChatRepository {
    */
   static async delete(id) {
     await this._verifyConnection();
-    console.log(`Eliminando chat ${id} en ${mongoose.connection.db.databaseName}`);
     return Chat.findByIdAndDelete(id);
   }
 

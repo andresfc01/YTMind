@@ -105,10 +105,7 @@ agentSchema.pre("save", function (next) {
 
   // Verificar las funciones
   if (this.functions && this.functions.length > 0) {
-    console.log(`El agente "${this.name}" tiene ${this.functions.length} funciones asignadas`);
     this.functions.forEach((func, index) => {
-      console.log(`Función ${index + 1}:`, func);
-
       // Verificar que cada función tenga los campos requeridos
       if (!func.name || !func.description || !func.parameters) {
         console.warn(`Advertencia: La función ${index + 1} puede no tener todos los campos requeridos:`, func);
@@ -123,10 +120,5 @@ agentSchema.pre("save", function (next) {
 
 // Verificamos si el modelo ya existe para evitar errores de sobredefinición
 const Agent = mongoose.models.Agent || mongoose.model("Agent", agentSchema);
-
-// Log para depuración
-console.log(
-  `Modelo Agent inicializado. Base de datos actual: ${mongoose.connection.db?.databaseName || "no conectado aún"}`
-);
 
 export default Agent;

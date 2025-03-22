@@ -1,20 +1,11 @@
 const AgentItem = ({ agent, isSelected, onSelect, onEdit, onDelete }) => {
   // Verificar que el agente tenga todos los campos necesarios
   if (!agent || typeof agent !== "object") {
-    console.error("AgentItem recibió un agente inválido:", agent);
     return null;
   }
 
   // Verificar si el agente tiene funciones asignadas
   const hasFunctions = agent.functions && Array.isArray(agent.functions) && agent.functions.length > 0;
-
-  console.log(
-    `AgentItem - Agente: ${agent.name || "Sin nombre"}, ID: ${agent.id || "Sin ID"}, tiene funciones:`,
-    hasFunctions
-  );
-  if (hasFunctions) {
-    console.log(`AgentItem - Funciones del agente ${agent.name || "Sin nombre"}:`, agent.functions);
-  }
 
   return (
     <div
@@ -116,8 +107,6 @@ const AgentItem = ({ agent, isSelected, onSelect, onEdit, onDelete }) => {
             const funcName = typeof func === "string" ? func : func && func.name ? func.name : `Función ${index + 1}`;
             const funcDesc =
               typeof func === "string" ? funcName : func && func.description ? func.description : "Sin descripción";
-
-            console.log(`AgentItem - Función ${index + 1}:`, func, "- Nombre usado:", funcName);
 
             return (
               <span

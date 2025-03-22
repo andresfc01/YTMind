@@ -54,7 +54,6 @@ export default function ChatMessage({
         const afterThinking = content.substring(thinkTagClose + 8); // 8 is length of "</think>"
 
         // Format thinking content but preserve intended structure
-        // This keeps the Chain of Draft format intact
         const formattedThinking = thinking.trim();
 
         setThinkingContent(formattedThinking);

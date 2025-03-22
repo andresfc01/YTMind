@@ -18,12 +18,8 @@ export async function GET(request) {
       agents = await AgentRepository.findAll();
     }
 
-    console.log(`Obtenidos ${agents.length} agentes de la base de datos`);
-
     // Transformamos los datos para la respuesta
     const agentsData = agents.map((agent) => {
-      console.log(`Agente ${agent.name} tiene ${agent.functions?.length || 0} funciones`);
-
       // Crear un objeto plano con todas las propiedades necesarias
       return {
         id: agent._id.toString(),
@@ -58,8 +54,6 @@ export async function POST(request) {
     const body = await request.json();
     const { name, description, systemPrompt, temperature, model, functions, usesAgents, icon, category } = body;
 
-    console.log("POST /api/agents - Datos recibidos:", body);
-
     // Validaciones básicas
     if (!name || !description || !systemPrompt) {
       return NextResponse.json(
@@ -81,8 +75,6 @@ export async function POST(request) {
       category: category || "general",
       isDefault: false, // Los agentes creados por el usuario nunca son predeterminados
     });
-
-    console.log(`Agente creado con ID ${newAgent._id} y ${newAgent.functions?.length || 0} funciones`);
 
     return NextResponse.json(
       {

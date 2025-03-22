@@ -48,9 +48,4 @@ urlSchema.pre("save", function (next) {
 // Verificamos si el modelo ya existe para evitar errores de sobredefinición
 const Url = mongoose.models.Url || mongoose.model("Url", urlSchema);
 
-// Log para depuración
-console.log(
-  `Modelo Url inicializado. Base de datos actual: ${mongoose.connection.db?.databaseName || "no conectado aún"}`
-);
-
 export default Url;

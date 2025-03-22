@@ -12,7 +12,6 @@ class UrlRepository {
    */
   static async _verifyConnection() {
     await connectToDatabase();
-    console.log(`Operación en base de datos: ${mongoose.connection.db.databaseName}`);
   }
 
   /**
@@ -27,8 +26,6 @@ class UrlRepository {
     if (!urlData.url || !urlData.agentId || !urlData.content) {
       throw new Error("URL, agentId y content son campos obligatorios");
     }
-
-    console.log(`Creando URL para el agente ${urlData.agentId}: ${urlData.url}`);
 
     const url = new Url(urlData);
     await url.save();
@@ -83,8 +80,6 @@ class UrlRepository {
     if (!mongoose.Types.ObjectId.isValid(id)) {
       throw new Error(`ID de URL inválido: ${id}`);
     }
-
-    console.log(`Actualizando URL con ID ${id}`);
 
     const updatedUrl = await Url.findByIdAndUpdate(id, { ...updateData, updatedAt: new Date() }, { new: true });
 

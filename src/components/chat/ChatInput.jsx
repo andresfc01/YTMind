@@ -1,18 +1,11 @@
 import React, { useState, useRef, useEffect } from "react";
 import { FiSend } from "react-icons/fi";
-import AgentSelector from "../agents/AgentSelector";
 
 /**
  * ChatInput component that exactly matches ChatGPT's input design
  * Includes auto-growing textarea and send button
  */
-export default function ChatInput({
-  onSendMessage,
-  disabled = false,
-  agents = [],
-  selectedAgentId = null,
-  onSelectAgent,
-}) {
+export default function ChatInput({ onSendMessage, disabled = false }) {
   const [message, setMessage] = useState("");
   const textareaRef = useRef(null);
 
@@ -44,9 +37,6 @@ export default function ChatInput({
   return (
     <form onSubmit={handleSubmit} className="relative w-full">
       <div className="flex items-end gap-2">
-        {agents.length > 0 && (
-          <AgentSelector agents={agents} selectedAgentId={selectedAgentId} onSelectAgent={onSelectAgent} />
-        )}
         <div className="relative flex-1">
           <textarea
             ref={textareaRef}

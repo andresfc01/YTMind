@@ -20,9 +20,6 @@ export async function GET(request, context) {
       return NextResponse.json({ error: "Agente no encontrado" }, { status: 404 });
     }
 
-    console.log(`GET agente ${id}: ${agent.name}`);
-    console.log(`El agente tiene ${agent.functions?.length || 0} funciones:`, agent.functions);
-
     // Transformamos para la respuesta - creando un objeto plano con todas las propiedades
     const agentData = {
       id: agent._id.toString(),
@@ -62,8 +59,6 @@ export async function PUT(request, context) {
 
     const body = await request.json();
     const { name, description, systemPrompt, temperature, model, functions, usesAgents, icon, category } = body;
-    console.log("Received PUT request with temperature:", temperature, typeof temperature);
-    console.log("Received functions:", functions);
 
     // Validaciones básicas
     if (!name || !description || !systemPrompt) {
@@ -101,8 +96,6 @@ export async function PUT(request, context) {
         icon,
         category,
       });
-
-      console.log(`Agente ${id} actualizado con ${updatedAgent.functions?.length || 0} funciones`);
 
       // Asegurarnos de que todos los campos necesarios estén en la respuesta
       const responseData = {

@@ -82,18 +82,14 @@ const AgentModal = ({ isOpen, agent, onClose, onSubmit }) => {
 
   // Manejar el toggle de una función
   const handleFunctionToggle = (functionName) => {
-    console.log(`Toggle de la función: ${functionName}`);
     setFunctions((prev) => {
       const isSelected = prev.includes(functionName);
-      console.log(`La función ${functionName} está ${isSelected ? "seleccionada" : "no seleccionada"}`);
 
       if (isSelected) {
         const newFunctions = prev.filter((f) => f !== functionName);
-        console.log("Nuevas funciones después de quitar:", newFunctions);
         return newFunctions;
       } else {
         const newFunctions = [...prev, functionName];
-        console.log("Nuevas funciones después de añadir:", newFunctions);
         return newFunctions;
       }
     });

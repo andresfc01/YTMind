@@ -43,14 +43,38 @@ This roadmap outlines the phased approach to developing YTMind, focusing on deli
 - [x] Develop URL context storage in MongoDB
 - [x] Build URL context integration with chat
 
+### Context Group System
+
+- [ ] Design Context Group data model
+- [ ] Create Context Group creation and management UI
+- [ ] Implement Context Group storage in MongoDB
+- [ ] Develop API endpoints for Context Group operations
+- [ ] Build Context Group integration with chat
+- [ ] Create Context Group selection in chat interface
+- [ ] Implement multi-item context handling in AI interactions
+
 ### Core Function Implementation
 
-- [ ] Design function architecture and interfaces
-- [ ] Implement YouTube data retrieval functions
-- [ ] Create content analysis functions
-- [ ] Build idea generation utilities
-- [ ] Develop script writing helpers
-- [ ] Implement SEO optimization functions
+- [x] Design function architecture and interfaces
+- [ ] Implement YouTube data retrieval functions:
+  - [x] getChannelInfo: Fetch basic information about a YouTube channel
+  - [x] listChannelVideos: Get videos from a specific channel
+  - [x] getVideoDetails: Retrieve detailed information about a video (including script)
+  - [ ] compareChannels: Compare statistics between multiple channels
+- [ ] Create content analysis functions:
+  - [ ] analyzeTitle: Evaluate title effectiveness and optimization
+  - [ ] analyzeScript: Examine script structure and engagement elements
+  - [ ] analyzeThumbnail: Assess thumbnail design and effectiveness
+  - [ ] analyzeChannel: Comprehensive channel analysis
+- [ ] Build idea generation utilities:
+  - [ ] generateVideoIdeas: Create video ideas based on popular videos from referenced channels
+  - [ ] generateTitles: Produce optimized titles for videos
+  - [ ] generateHooks: Create compelling hooks for videos
+- [ ] Develop script writing helpers:
+  - [ ] generateCompleteScript: Create full scripts based on video concepts
+- [ ] Implement optimization functions:
+  - [ ] designThumbnailConcept: Describe effective thumbnail designs
+  - [ ] recommendChannelImprovements: Suggest optimization strategies for channels
 
 ## Phase 3: Agent System (Weeks 5-6)
 
@@ -80,21 +104,35 @@ This roadmap outlines the phased approach to developing YTMind, focusing on deli
 ### YouTube Data API Integration
 
 - [ ] Set up YouTube Data API client
-- [ ] Implement channel data fetching
-- [ ] Create video data retrieval functions
-- [ ] Build data processing utilities
+- [ ] Implement channel data fetching functions:
+  - [ ] getChannelInfo: Detailed channel statistics and metadata
+  - [ ] listChannelVideos: Paginated video listing with filters
+- [ ] Create video data retrieval functions:
+  - [ ] getVideoDetails: Comprehensive video information
+  - [ ] analyzeComments: Extract and analyze comment sentiment and themes
+- [ ] Build data processing utilities:
+  - [ ] Data formatting and standardization
+  - [ ] Caching mechanisms for API optimization
 
 ### Channel Analysis
 
-- [ ] Develop channel analysis workflow
+- [ ] Develop channel analysis workflow:
+  - [ ] analyzeChannel: Full channel evaluation
+  - [ ] compareChannels: Multi-channel comparison
 - [ ] Create channel data storage in MongoDB
 - [ ] Implement channel data visualization
-- [ ] Build channel comparison functionality
+- [ ] Build channel comparison functionality:
+  - [ ] Metrics comparison
+  - [ ] Content strategy analysis
+  - [ ] recommendChannelImprovements: Actionable enhancement suggestions
 
 ### Video Analysis
 
 - [ ] Implement video metadata extraction
-- [ ] Create video content analysis functions
+- [ ] Create video content analysis functions:
+  - [ ] analyzeTitle: Title effectiveness evaluation
+  - [ ] analyzeThumbnail: Thumbnail design assessment
+  - [ ] analyzeScript: Script structure and engagement analysis
 - [ ] Develop video data storage in MongoDB
 - [ ] Build video search and filtering
 
@@ -125,10 +163,15 @@ This roadmap outlines the phased approach to developing YTMind, focusing on deli
 
 ### Enhanced Content Generation
 
-- [ ] Improve script generation quality
-- [ ] Enhance thumbnail concept descriptions
-- [ ] Develop more sophisticated SEO suggestions
-- [ ] Create content series planning
+- [ ] Improve script generation quality:
+  - [ ] generateHooks: Create more compelling introductions
+  - [ ] generateCompleteScript: Enhanced script generation
+- [ ] Enhance thumbnail concept descriptions:
+  - [ ] designThumbnailConcept: More detailed visual concepts
+- [ ] Develop more sophisticated title generation:
+  - [ ] generateTitles: Advanced title optimization
+- [ ] Create content series planning:
+  - [ ] generateVideoIdeas: Series-based idea generation
 
 ### UI/UX Refinement
 

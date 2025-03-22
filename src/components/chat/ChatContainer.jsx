@@ -158,13 +158,7 @@ export default function ChatContainer({
       {/* Input box with subtle separation */}
       <div className="fixed bottom-0 left-0 w-full border-t border-[#e5e5e5] bg-white/80 backdrop-blur-sm pb-4 pt-4 sm:pb-6">
         <div className="mx-auto flex max-w-4xl px-4">
-          <ChatInput
-            onSendMessage={onSendMessage}
-            disabled={isLoading}
-            agents={agents}
-            selectedAgentId={selectedAgentId}
-            onSelectAgent={onSelectAgent}
-          />
+          <ChatInput onSendMessage={onSendMessage} disabled={isLoading} />
         </div>
       </div>
     </div>

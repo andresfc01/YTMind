@@ -6,7 +6,7 @@ import AgentModal from "./AgentModal";
  * Componente principal para gestionar agentes
  * Integra la lista de agentes y el modal para crear/editar
  */
-export default function AgentManager({ onSelectAgent, selectedAgentId }) {
+export default function AgentManager({ onSelectAgent, selectedAgentId, onCreateNewChatWithAgent }) {
   const [agents, setAgents] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -26,7 +26,6 @@ export default function AgentManager({ onSelectAgent, selectedAgentId }) {
         }
 
         const data = await response.json();
-        console.log("Agentes obtenidos del servidor:", data.agents);
 
         // Validar que los agentes incluyan sus funciones y todos los campos necesarios
         const agentsWithValidData = data.agents.map((agent) => {
@@ -47,19 +46,10 @@ export default function AgentManager({ onSelectAgent, selectedAgentId }) {
 
           // Verificar las funciones
           if (!agent.functions) {
-            console.warn(`Agente ${agent.name || "sin nombre"} sin array de funciones definido`);
             validAgent.functions = [];
           } else if (!Array.isArray(agent.functions)) {
-            console.warn(
-              `Agente ${agent.name || "sin nombre"} tiene funciones en formato incorrecto:`,
-              agent.functions
-            );
             validAgent.functions = [];
           } else {
-            console.log(
-              `Agente ${agent.name || "sin nombre"} con ${agent.functions.length} funciones:`,
-              agent.functions
-            );
             validAgent.functions = agent.functions;
           }
 
@@ -88,20 +78,13 @@ export default function AgentManager({ onSelectAgent, selectedAgentId }) {
   // Abrir modal para editar un agente existente
   const handleEditAgent = async (agent) => {
     try {
-      console.log("Iniciando edición del agente:", agent.id);
-      console.log("Datos iniciales del agente:", agent);
-
       // Verificar si el agente ya tiene funciones
       if (agent.functions && agent.functions.length > 0) {
-        console.log("El agente ya tiene funciones en el objeto:", agent.functions);
       } else {
-        console.log("El agente no tiene funciones en el objeto, intentando obtenerlas del API");
-
         // Obtener funciones del agente si existen
         const functionResponse = await fetch(`/api/agents/${agent.id}/functions`);
         if (functionResponse.ok) {
           const functionData = await functionResponse.json();
-          console.log("Funciones obtenidas del agente:", functionData.functions);
           // Añadimos las funciones al objeto del agente
           agent = {
             ...agent,
@@ -118,7 +101,6 @@ export default function AgentManager({ onSelectAgent, selectedAgentId }) {
         const agentResponse = await fetch(`/api/agents/${agent.id}`);
         if (agentResponse.ok) {
           const agentData = await agentResponse.json();
-          console.log("Datos actualizados del agente:", agentData.agent);
 
           // Mezclamos los datos, dando prioridad a los datos recién obtenidos
           agent = {
@@ -127,8 +109,6 @@ export default function AgentManager({ onSelectAgent, selectedAgentId }) {
             // Aseguramos que las funciones estén siempre presentes
             functions: agentData.agent.functions || agent.functions || [],
           };
-
-          console.log("Agente final para edición:", agent);
         }
       } catch (agentFetchError) {
         console.error("Error obteniendo datos actualizados del agente:", agentFetchError);
@@ -144,7 +124,6 @@ export default function AgentManager({ onSelectAgent, selectedAgentId }) {
   // Manejar el envío del formulario (crear/editar)
   const handleSubmitAgent = async (formData) => {
     setIsSubmitting(true);
-    console.log("Submitting agent with all data:", formData);
 
     try {
       // Si editingAgent existe, actualizar; de lo contrario, crear
@@ -156,8 +135,6 @@ export default function AgentManager({ onSelectAgent, selectedAgentId }) {
         ...formData,
         temperature: parseFloat(formData.temperature) || 0.7,
       };
-
-      console.log("Sending complete agent data:", dataToSend);
 
       // Actualizamos el agente con todos sus datos en una sola operación
       const response = await fetch(url, {
@@ -175,7 +152,6 @@ export default function AgentManager({ onSelectAgent, selectedAgentId }) {
       }
 
       const data = await response.json();
-      console.log("Agent created/updated with complete data:", data.agent);
 
       // Actualizar la lista de agentes
       if (editingAgent) {
@@ -266,6 +242,7 @@ export default function AgentManager({ onSelectAgent, selectedAgentId }) {
             onEditAgent={handleEditAgent}
             onDeleteAgent={handleDeleteAgent}
             onCreateAgent={handleCreateAgent}
+            onCreateNewChatWithAgent={onCreateNewChatWithAgent}
           />
         </div>
       )}

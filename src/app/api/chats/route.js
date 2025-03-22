@@ -32,31 +32,72 @@ export async function GET() {
  */
 export async function POST(request) {
   try {
-    const body = await request.json();
-    const { title, messages, model } = body;
+    const data = await request.json();
 
-    if (!title) {
+    if (!data.title) {
       return NextResponse.json({ error: "El título es requerido" }, { status: 400 });
     }
 
-    const newChat = await ChatRepository.create({
-      title,
-      messages: messages || [],
-      model,
+    // Validate messages array if provided
+    if (data.messages && Array.isArray(data.messages)) {
+      // Validate each message
+      for (let i = 0; i < data.messages.length; i++) {
+        const message = data.messages[i];
+
+        // Ensure it's an object
+        if (!message || typeof message !== "object") {
+          return NextResponse.json({ error: `El mensaje ${i} debe ser un objeto válido` }, { status: 400 });
+        }
+
+        // Validate role
+        if (
+          !message.role ||
+          typeof message.role !== "string" ||
+          !["user", "assistant", "system", "function", "tool"].includes(message.role)
+        ) {
+          return NextResponse.json(
+            { error: `El rol del mensaje ${i} debe ser uno de: user, assistant, system, function, tool` },
+            { status: 400 }
+          );
+        }
+
+        // Validate content
+        if (message.content === undefined || message.content === null) {
+          return NextResponse.json(
+            { error: `El contenido del mensaje ${i} no puede ser nulo o indefinido` },
+            { status: 400 }
+          );
+        }
+
+        // Ensure content is a string
+        message.content = String(message.content);
+
+        // Add timestamp if not present
+        if (!message.timestamp) {
+          message.timestamp = new Date().toISOString();
+        }
+      }
+    } else {
+      // Initialize empty array if no messages provided
+      data.messages = [];
+    }
+
+    const chat = await ChatRepository.create({
+      title: data.title,
+      messages: data.messages,
+      model: data.model || "gemini-2.0-flash",
     });
 
-    return NextResponse.json(
-      {
-        chat: {
-          id: newChat._id.toString(),
-          title: newChat.title,
-          messagesCount: newChat.messages.length,
-          createdAt: newChat.createdAt,
-          updatedAt: newChat.updatedAt,
-        },
+    return NextResponse.json({
+      message: "Chat creado correctamente",
+      chat: {
+        id: chat._id,
+        title: chat.title,
+        messages: chat.messages,
+        createdAt: chat.createdAt,
+        updatedAt: chat.updatedAt,
       },
-      { status: 201 }
-    );
+    });
   } catch (error) {
     console.error("Error al crear chat:", error);
     return NextResponse.json({ error: "Error al crear chat" }, { status: 500 });

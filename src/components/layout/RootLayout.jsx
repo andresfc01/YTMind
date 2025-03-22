@@ -17,6 +17,16 @@ export default function RootLayout({
   onDeleteChat,
   isLoadingHistory = false,
   isDeleting = false,
+  // Props de agentes
+  agents = [],
+  selectedAgentId = null,
+  onSelectAgent,
+  onCreateNewChatWithAgent,
+  // Props de grupos de contexto
+  contextGroups = [],
+  selectedContextGroupIds = [],
+  onSelectContextGroups,
+  onContextGroupsChange,
 }) {
   const pathname = usePathname();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -63,12 +73,25 @@ export default function RootLayout({
         `}
       >
         <Sidebar
+          isOpen={isSidebarOpen}
+          setIsOpen={setIsSidebarOpen}
           onNewChat={onNewChat}
           chatHistory={chatHistory}
           onLoadChat={onLoadChat}
           onDeleteChat={onDeleteChat}
-          isLoading={isLoadingHistory}
+          currentChatId={pathname === "/" ? null : pathname.split("/").pop()}
+          isLoadingHistory={isLoadingHistory}
           isDeleting={isDeleting}
+          // Props de agentes
+          agents={agents}
+          selectedAgentId={selectedAgentId}
+          onSelectAgent={onSelectAgent}
+          onCreateNewChatWithAgent={onCreateNewChatWithAgent}
+          // Props de grupos de contexto
+          contextGroups={contextGroups}
+          selectedContextGroupIds={selectedContextGroupIds}
+          onSelectContextGroups={onSelectContextGroups}
+          onContextGroupsChange={onContextGroupsChange}
         />
       </div>
 

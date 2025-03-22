@@ -13,7 +13,6 @@ class AgentRepository {
    */
   static async _verifyConnection() {
     await connectToDatabase();
-    console.log(`Operación en base de datos: ${mongoose.connection.db.databaseName}`);
   }
 
   /**
@@ -24,7 +23,6 @@ class AgentRepository {
   static async create(agentData) {
     await this._verifyConnection();
     const agent = new Agent(agentData);
-    console.log(`Creando agente "${agentData.name}" en ${mongoose.connection.db.databaseName}`);
     await agent.save();
     return agent;
   }
@@ -46,15 +44,20 @@ class AgentRepository {
    * @returns {Promise<Object>} - El agente encontrado
    */
   static async findById(id) {
-    await this._verifyConnection();
-    if (!mongoose.Types.ObjectId.isValid(id)) {
-      throw new Error(`ID de agente inválido: ${id}`);
+    try {
+      await this._verifyConnection();
+
+      if (!mongoose.Types.ObjectId.isValid(id)) {
+        return null;
+      }
+
+      const agent = await Agent.findById(id);
+
+      return agent;
+    } catch (error) {
+      console.error(`[AgentRepository] Error finding agent by ID ${id}:`, error);
+      throw error;
     }
-    const agent = await Agent.findById(id);
-    if (!agent) {
-      throw new Error(`Agente con ID ${id} no encontrado`);
-    }
-    return agent;
   }
 
   /**
@@ -69,9 +72,6 @@ class AgentRepository {
       throw new Error(`ID de agente inválido: ${id}`);
     }
 
-    console.log(`Actualizando agente con ID ${id}`);
-    console.log("Datos de actualización:", JSON.stringify(updateData, null, 2));
-
     // Asegurarnos de que los campos numéricos sean números
     if (typeof updateData.temperature !== "undefined") {
       updateData.temperature = parseFloat(updateData.temperature);
@@ -82,8 +82,6 @@ class AgentRepository {
 
     // Verificar si estamos actualizando las funciones
     if (updateData.functions) {
-      console.log("Validando funciones a actualizar:", updateData.functions);
-
       // Asegurarse de que las funciones tengan el formato correcto
       if (Array.isArray(updateData.functions)) {
         // Transformar cada función al formato correcto
@@ -92,10 +90,8 @@ class AgentRepository {
         for (const func of updateData.functions) {
           // Si es un string (nombre de función), buscamos la función completa
           if (typeof func === "string") {
-            console.log(`Procesando función por nombre: ${func}`);
             const functionDef = getFunctionByName(func);
             if (functionDef) {
-              console.log(`Función '${func}' encontrada, añadiendo a la lista`);
               validatedFunctions.push({
                 name: functionDef.name,
                 description: functionDef.description,
@@ -109,14 +105,12 @@ class AgentRepository {
 
           // Si ya es un objeto completo y válido, lo usamos directamente
           if (func && typeof func === "object" && func.name && func.description && func.parameters) {
-            console.log(`Función con formato completo: ${func.name}`);
             validatedFunctions.push(func);
             continue;
           }
 
           // Para otros formatos, intentamos recuperar por nombre si es posible
           if (func && typeof func === "object" && func.name) {
-            console.log(`Buscando definición completa para: ${func.name}`);
             const functionDef = getFunctionByName(func.name);
             if (functionDef) {
               validatedFunctions.push({
@@ -133,7 +127,6 @@ class AgentRepository {
           console.warn(`Formato no reconocido, omitiendo:`, func);
         }
 
-        console.log(`Funciones validadas (${validatedFunctions.length}):`, validatedFunctions);
         updateData.functions = validatedFunctions;
       } else {
         // Si no es un array, lo convertimos en un array vacío
@@ -148,26 +141,14 @@ class AgentRepository {
       throw new Error(`Agente con ID ${id} no encontrado`);
     }
 
-    console.log("Agente encontrado:", agent.name);
-    console.log("Funciones actuales:", agent.functions);
-
     // Actualizar los campos
     Object.keys(updateData).forEach((key) => {
-      if (key === "functions") {
-        console.log(`Actualizando funciones del agente ${id}:`, updateData.functions);
-      }
       agent[key] = updateData[key];
     });
-
-    console.log("Agente después de aplicar cambios (antes de guardar):");
-    console.log("- Nombre:", agent.name);
-    console.log("- Funciones:", agent.functions);
 
     // Guardar los cambios
     try {
       await agent.save();
-      console.log(`Agente ${id} guardado con éxito`);
-      console.log("Funciones guardadas:", agent.functions);
     } catch (error) {
       console.error(`Error al guardar el agente ${id}:`, error);
       throw error;
@@ -236,8 +217,6 @@ class AgentRepository {
       throw new Error(`ID de documento inválido: ${documentId}`);
     }
 
-    console.log(`Añadiendo documento ${documentId} al agente ${agentId}`);
-
     // Verificar si el documento ya está asociado al agente
     const agent = await Agent.findById(agentId);
     if (!agent) {
@@ -251,7 +230,6 @@ class AgentRepository {
 
     // Verificamos si el documento ya está en el agente
     if (agent.documents.includes(documentId)) {
-      console.log(`El documento ${documentId} ya está asociado al agente ${agentId}`);
       return agent;
     }
 
@@ -277,8 +255,6 @@ class AgentRepository {
       throw new Error(`ID de documento inválido: ${documentId}`);
     }
 
-    console.log(`Eliminando documento ${documentId} del agente ${agentId}`);
-
     // Verificar si el agente existe
     const agent = await Agent.findById(agentId);
     if (!agent) {
@@ -287,7 +263,6 @@ class AgentRepository {
 
     // Verificamos si documents es un array
     if (!agent.documents || !Array.isArray(agent.documents)) {
-      console.log(`El agente ${agentId} no tiene documentos definidos`);
       agent.documents = [];
       await agent.save();
       return agent;
@@ -334,8 +309,6 @@ class AgentRepository {
       throw new Error(`ID de URL inválido: ${urlId}`);
     }
 
-    console.log(`Añadiendo URL ${urlId} al agente ${agentId}`);
-
     // Verificar si la URL ya está asociada al agente
     const agent = await Agent.findById(agentId);
     if (!agent) {
@@ -349,7 +322,6 @@ class AgentRepository {
 
     // Verificamos si la URL ya está en el agente
     if (agent.urls.includes(urlId)) {
-      console.log(`La URL ${urlId} ya está asociada al agente ${agentId}`);
       return agent;
     }
 
@@ -375,8 +347,6 @@ class AgentRepository {
       throw new Error(`ID de URL inválido: ${urlId}`);
     }
 
-    console.log(`Eliminando URL ${urlId} del agente ${agentId}`);
-
     // Verificar si el agente existe
     const agent = await Agent.findById(agentId);
     if (!agent) {
@@ -385,7 +355,6 @@ class AgentRepository {
 
     // Verificamos si urls es un array
     if (!agent.urls || !Array.isArray(agent.urls)) {
-      console.log(`El agente ${agentId} no tiene URLs definidas`);
       agent.urls = [];
       await agent.save();
       return agent;

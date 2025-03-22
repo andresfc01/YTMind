@@ -12,7 +12,6 @@ class DocumentRepository {
    */
   static async _verifyConnection() {
     await connectToDatabase();
-    console.log(`Operación en base de datos: ${mongoose.connection.db.databaseName}`);
   }
 
   /**
@@ -23,7 +22,6 @@ class DocumentRepository {
   static async create(documentData) {
     await this._verifyConnection();
     const document = new Document(documentData);
-    console.log(`Creando documento "${documentData.name}" para el agente ${documentData.agentId}`);
     await document.save();
     return document;
   }
@@ -76,8 +74,6 @@ class DocumentRepository {
     if (!mongoose.Types.ObjectId.isValid(id)) {
       throw new Error(`ID de documento inválido: ${id}`);
     }
-
-    console.log(`Actualizando documento con ID ${id}`);
 
     const updatedDocument = await Document.findByIdAndUpdate(
       id,

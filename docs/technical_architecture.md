@@ -73,8 +73,8 @@ YTMind follows a modern web application architecture with the following componen
   ],
   contextIds: [
     {
-      type: String, // 'document' or 'url'
-      id: ObjectId // Reference to a Document or URL
+      type: String, // 'document', 'url', 'contextgroup'
+      id: ObjectId // Reference to a Document, URL, or ContextGroup
     }
   ],
   createdAt: Date,
@@ -256,9 +256,34 @@ YTMind follows a modern web application architecture with the following componen
     ],
     summary: String
   },
-  addedAt: Date,
+  fetchedAt: Date,
   createdAt: Date,
   updatedAt: Date
+}
+```
+
+### ContextGroup
+
+```javascript
+{
+  _id: ObjectId,
+  name: String,
+  description: String,
+  items: [
+    {
+      type: String, // 'channel', 'video', 'document', 'url'
+      id: ObjectId, // Reference to the item
+      addedAt: Date
+    }
+  ],
+  metadata: {
+    tags: [String], // User-defined tags
+    icon: String, // Icon identifier for the group
+    color: String // Color for visual identification
+  },
+  createdAt: Date,
+  updatedAt: Date,
+  lastUsedAt: Date // Track when the group was last used in a conversation
 }
 ```
 
@@ -280,6 +305,16 @@ YTMind follows a modern web application architecture with the following componen
 - `DELETE /api/agents/:id` - Delete an agent
 - `GET /api/agents/:id/functions` - Get functions for a specific agent
 - `GET /api/agents/:id/used-agents` - Get agents used by a specific agent
+
+### Context Group Endpoints
+
+- `POST /api/context-groups` - Create a new context group
+- `GET /api/context-groups` - Get all context groups
+- `GET /api/context-groups/:id` - Get a specific context group
+- `PUT /api/context-groups/:id` - Update a context group
+- `DELETE /api/context-groups/:id` - Delete a context group
+- `POST /api/context-groups/:id/items` - Add an item to a context group
+- `DELETE /api/context-groups/:id/items/:itemId` - Remove an item from a context group
 
 ### YouTube Analysis Endpoints
 
@@ -335,14 +370,24 @@ YTMind follows a modern web application architecture with the following componen
    - User can assign URL to an agent as context
    - During chat, URL context is provided to the AI model
 
-3. **Function Implementation Flow**
+3. **Context Group Flow**
+
+   - User creates a context group and gives it a name
+   - User adds items (videos, channels, documents, URLs) to the group
+   - User selects a context group when starting a chat
+   - System retrieves all items in the group
+   - All group items are provided as context to the AI model
+   - Group can be reused across multiple chats
+   - User can update group contents over time
+
+4. **Function Implementation Flow**
 
    - Developer creates function implementations in the codebase
    - Functions are made available for assignment to agents
    - User creates or modifies agent, assigning functions
    - During chat, agent can execute assigned functions
 
-4. **Channel Analysis Flow**
+5. **Channel Analysis Flow**
 
    - User requests channel analysis via chat
    - System fetches channel data from YouTube API
@@ -350,14 +395,14 @@ YTMind follows a modern web application architecture with the following componen
    - AI generates analysis summary
    - Results are presented to user in chat
 
-5. **Content Generation Flow**
+6. **Content Generation Flow**
 
    - User requests content generation
    - System retrieves relevant channel/video data from MongoDB
    - AI generates content based on stored data and user request
    - Generated content is presented to user in chat
 
-6. **Agent Interaction Flow**
+7. **Agent Interaction Flow**
 
    - User selects or creates an agent
    - System loads agent configuration and context
@@ -366,7 +411,7 @@ YTMind follows a modern web application architecture with the following componen
    - Agent may use other specialized agents for specific tasks
    - Agent responses are based on its specialized configuration, functions, and context
 
-7. **Multi-Agent Collaboration Flow**
+8. **Multi-Agent Collaboration Flow**
 
    - Primary agent receives user request
    - Primary agent determines if specialized agents are needed

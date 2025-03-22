@@ -9,7 +9,6 @@ export async function GET(request, context) {
   try {
     // En Next.js 14, params es una Promesa que debe ser esperada
     const params = await context.params;
-    console.log("Params después de await:", params);
 
     const id = params?.id;
 
@@ -38,7 +37,6 @@ export async function PUT(request, context) {
   try {
     // En Next.js 14, params es una Promesa que debe ser esperada
     const params = await context.params;
-    console.log("Params después de await:", params);
 
     const id = params?.id;
 
@@ -80,7 +78,6 @@ export async function DELETE(request, context) {
   try {
     // En Next.js 14, params es una Promesa que debe ser esperada
     const params = await context.params;
-    console.log("Params después de await:", params);
 
     const id = params?.id;
 
