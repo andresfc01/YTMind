@@ -3,32 +3,44 @@ import React from "react";
 /**
  * Card component for displaying a context group
  */
-export default function ContextGroupCard({ contextGroup, onSelect, onEdit, onDelete }) {
+export default function ContextGroupCard({ contextGroup, onViewDetails, onEdit, onDelete }) {
   const { name, description, items = [], metadata = {} } = contextGroup;
   const itemCount = items.length;
 
   return (
-    <div className="mb-4 overflow-hidden rounded-lg border border-gray-200 bg-white shadow-md">
-      <div className="px-4 py-5 sm:px-6">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center">
-            <div
-              className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full"
-              style={{ backgroundColor: metadata.color || "#6366f1" }}
+    <div className="group relative overflow-hidden rounded-xl border border-gray-100 bg-white shadow-sm transition-all duration-200 hover:border-gray-200 hover:shadow-md">
+      <div className="px-4 py-4">
+        <div className="flex items-center space-x-4">
+          <div
+            className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-lg"
+            style={{ backgroundColor: metadata.color || "#6366f1" }}
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="h-6 w-6 text-white"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
             >
-              <span className="text-lg text-white">{metadata.icon ? metadata.icon : name.charAt(0).toUpperCase()}</span>
-            </div>
-            <div className="ml-4">
-              <h3 className="text-lg font-medium leading-6 text-gray-900">{name}</h3>
-              <p className="text-sm text-gray-500">
-                {itemCount} {itemCount === 1 ? "item" : "items"}
-              </p>
-            </div>
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"
+              />
+            </svg>
           </div>
-          <div className="flex space-x-2">
+          <div className="min-w-0 flex-1">
+            <h3 className="truncate text-base font-medium text-gray-900">{name}</h3>
+            {description && <p className="mt-1 line-clamp-2 text-sm text-gray-500">{description}</p>}
+            <p className="mt-1 text-sm font-medium text-gray-600">
+              {itemCount} {itemCount === 1 ? "item" : "items"}
+            </p>
+          </div>
+          <div className="flex flex-shrink-0 items-start space-x-2 opacity-0 transition-opacity duration-200 group-hover:opacity-100">
             <button
               onClick={() => onEdit(contextGroup)}
-              className="inline-flex items-center rounded-md border border-gray-300 bg-white px-2.5 py-1.5 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none"
+              className="rounded-md p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -47,11 +59,11 @@ export default function ContextGroupCard({ contextGroup, onSelect, onEdit, onDel
             </button>
             <button
               onClick={() => onDelete(contextGroup)}
-              className="inline-flex items-center rounded-md border border-gray-300 bg-white px-2.5 py-1.5 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none"
+              className="rounded-md p-1 text-gray-400 hover:bg-gray-100 hover:text-red-600"
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
-                className="h-4 w-4 text-red-500"
+                className="h-4 w-4"
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"
@@ -66,18 +78,14 @@ export default function ContextGroupCard({ contextGroup, onSelect, onEdit, onDel
             </button>
           </div>
         </div>
-
-        {description && <p className="mt-2 text-sm text-gray-500">{description}</p>}
       </div>
-
-      <div className="border-t border-gray-200 bg-gray-50 px-4 py-4">
-        <button
-          onClick={() => onSelect(contextGroup)}
-          className="w-full rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none"
-        >
-          Use in Chat
-        </button>
-      </div>
+      <button
+        onClick={() => onViewDetails(contextGroup)}
+        className="mt-2 block w-full border-t border-gray-50 px-4 py-3 text-left text-sm font-medium"
+        style={{ backgroundColor: metadata.color || "#6366f1", color: "white" }}
+      >
+        View Details →
+      </button>
     </div>
   );
 }
