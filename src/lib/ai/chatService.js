@@ -1,18 +1,85 @@
 import OpenAI from "openai";
 
-// Default system message for Markdown formatting
-const MARKDOWN_SYSTEM_MESSAGE = {
+// Unified system message combining formatting and thinking instructions
+const UNIFIED_SYSTEM_MESSAGE = {
   role: "system",
-  content:
-    "When appropriate and relevant, format your responses using Markdown to enhance readability. Use headers, lists, code blocks, bold, italic, and other Markdown formatting features to structure your responses and make information easier to understand. However, only use formatting when it adds value to the response.",
+  content: `You are an AI assistant that helps with YouTube content analysis and management.
+
+When solving problems, use Chain of Draft reasoning inside <think> tags. Start with a <script> XML tag followed by a brief outline of your approach - use concise steps (5-7 words per step) to frame your thinking.
+
+Format your responses using Markdown to enhance readability. Use headers, lists, code blocks, bold, italic, and other Markdown formatting features when it adds value to the response.
+
+Be direct, concise, and helpful in your answers.`,
 };
 
-// Default system message for step-by-step thinking with XML tags
-const THINKING_SYSTEM_MESSAGE = {
-  role: "system",
-  content:
-    "Always Use Chain of Draft reasoning inside <think> tags to solve problems. Always Start with a <script> XML tag followed by a brief outline of your approach - use concise steps (5-7 words per step) to frame your thinking.",
-};
+/**
+ * Creates a system message with full context information
+ * @param {Array} contextGroups - Array of context groups with their items
+ * @returns {Object} System message with formatted context
+ */
+export function createContextSystemMessage(contextGroups) {
+  if (!contextGroups || contextGroups.length === 0) {
+    return null;
+  }
+
+  let content = "Below is context information that you can reference in your response when relevant.\n\n";
+
+  // Process each context group and format it with XML tags
+  contextGroups.forEach((group) => {
+    content += `<context-group id="${group._id}" name="${group.name}">\n`;
+
+    // Add group description if available
+    if (group.description) {
+      content += `<description>${group.description}</description>\n`;
+    }
+
+    // Add metadata if available
+    if (group.metadata) {
+      content += `<metadata>${JSON.stringify(group.metadata)}</metadata>\n`;
+    }
+
+    // Add items if available
+    if (group.items && group.items.length > 0) {
+      content += `<items>\n`;
+      group.items.forEach((item) => {
+        content += `<item type="${item.type}" id="${item.id}">\n`;
+
+        // Formato específico según el tipo de elemento
+        if (item.type === "video" && item.details) {
+          content += `  <title>${item.details.title || "Untitled"}</title>\n`;
+          if (item.details.description) content += `  <description>${item.details.description}</description>\n`;
+          if (item.details.channelTitle) content += `  <channel>${item.details.channelTitle}</channel>\n`;
+          if (item.details.transcript) content += `  <transcript>${item.details.transcript}</transcript>\n`;
+        } else if (item.type === "channel" && item.details) {
+          content += `  <title>${item.details.title || "Untitled Channel"}</title>\n`;
+          if (item.details.description) content += `  <description>${item.details.description}</description>\n`;
+        } else if (item.type === "document" && item.details) {
+          content += `  <title>${item.details.title || "Untitled Document"}</title>\n`;
+          if (item.details.content) content += `  <content>${item.details.content}</content>\n`;
+        } else if (item.type === "url" && item.details) {
+          content += `  <title>${item.details.title || "Untitled URL"}</title>\n`;
+          if (item.details.url) content += `  <url>${item.details.url}</url>\n`;
+          if (item.details.content) content += `  <content>${item.details.content}</content>\n`;
+        }
+        // Incluir datos completos como respaldo
+        content += `  <raw_data>${JSON.stringify(item.details || {})}</raw_data>\n`;
+
+        content += `</item>\n`;
+      });
+      content += `</items>\n`;
+    }
+
+    content += `</context-group>\n\n`;
+  });
+
+  content +=
+    "NOTE: Only use this context information when it is relevant to answering the user's question. If the user mentions a specific context group or its content, refer to that information in your response. Otherwise, you can respond without reference to the context.";
+
+  return {
+    role: "system",
+    content,
+  };
+}
 
 /**
  * Crea un cliente de OpenAI con la configuración proporcionada
@@ -26,31 +93,90 @@ export function createClient(config) {
 }
 
 /**
+ * Construye un mensaje de sistema unificado basado en las opciones activadas
+ * @param {Object} options - Opciones para la construcción del mensaje
+ * @returns {Object} Mensaje de sistema unificado
+ */
+function buildSystemMessage(options = {}) {
+  const { useMarkdown = true, useThinking = true } = options;
+  let content = "You are an AI assistant that helps with YouTube content analysis and management.\n\n";
+
+  if (useThinking) {
+    content +=
+      "When solving problems, use Chain of Draft reasoning inside <think> tags. Always start with a <think> XML tag followed by a brief outline of your approach - use concise steps (5-7 words per step) to frame your thinking.\n\n" +
+      "For example:\n" +
+      "<think>\n" +
+      "1. Understand the YouTube analysis request\n" +
+      "2. Identify key metrics needed\n" +
+      "3. Analyze channel performance data\n" +
+      "4. Compare with industry benchmarks\n" +
+      "5. Provide actionable recommendations\n" +
+      "</think>\n\n";
+  }
+
+  if (useMarkdown) {
+    content +=
+      "Format your responses using Markdown to enhance readability. Use headers, lists, code blocks, bold, italic, and other Markdown formatting features when it adds value to the response.\n\n";
+  }
+
+  content += "Be direct, concise, and helpful in your answers.";
+
+  return {
+    role: "system",
+    content,
+  };
+}
+
+/**
  * Añade mensajes de sistema predefinidos para mejorar la calidad de respuestas
  * @param {Array} messages - Array de mensajes originales
  * @param {Object} options - Opciones adicionales
  * @returns {Array} - Mensajes con los mensajes de sistema añadidos
  */
 function addSystemMessages(messages, options = {}) {
-  const { useMarkdown = true, useThinking = true } = options;
+  const { useMarkdown = true, useThinking = true, contextGroups = [] } = options;
 
   // Crear copia de los mensajes para no modificar el original
   const enhancedMessages = [...messages];
 
   // Verificar si ya existen mensajes de sistema
-  const hasMarkdownMessage = messages.some(
-    (m) => m.role === "system" && m.content.includes("format your responses using Markdown")
+  const hasSystemMessage = messages.some((m) => m.role === "system");
+
+  const hasContextMessage = messages.some(
+    (m) => (m.role === "system" || m.role === "user") && m.content.includes("<context-group")
   );
 
-  const hasThinkingMessage = messages.some((m) => m.role === "system" && m.content.includes("<think>"));
-
-  // Añadir solo los mensajes que no existen ya
-  if (useMarkdown && !hasMarkdownMessage) {
-    enhancedMessages.unshift(MARKDOWN_SYSTEM_MESSAGE);
+  // Añadir mensaje de sistema unificado si no existe ya uno
+  if (!hasSystemMessage) {
+    const systemMessage = buildSystemMessage({ useMarkdown, useThinking });
+    enhancedMessages.unshift(systemMessage);
   }
 
-  if (useThinking && !hasThinkingMessage) {
-    enhancedMessages.unshift(THINKING_SYSTEM_MESSAGE);
+  // Añadir mensaje de contexto como 'user' si hay grupos y no existe ya un mensaje similar
+  if (contextGroups.length > 0 && !hasContextMessage) {
+    const contextContent = createContextSystemMessage(contextGroups);
+    if (contextContent) {
+      // Convertir a mensaje de usuario y añadirlo después de los mensajes del sistema
+      const contextUserMessage = {
+        role: "user",
+        content: contextContent.content,
+      };
+
+      // Encuentra la posición después del último mensaje de sistema
+      let lastSystemIndex = -1;
+      for (let i = 0; i < enhancedMessages.length; i++) {
+        if (enhancedMessages[i].role === "system") {
+          lastSystemIndex = i;
+        }
+      }
+
+      // Insertar después del último mensaje de sistema o al principio si no hay
+      if (lastSystemIndex >= 0) {
+        enhancedMessages.splice(lastSystemIndex + 1, 0, contextUserMessage);
+      } else {
+        enhancedMessages.unshift(contextUserMessage);
+      }
+    }
   }
 
   return enhancedMessages;
@@ -62,6 +188,7 @@ function addSystemMessages(messages, options = {}) {
  * @param {Object} options - Opciones para la interacción
  * @param {OpenAI} options.client - Cliente OpenAI ya configurado
  * @param {Array} options.messages - Historial de mensajes del chat
+ * @param {Array} [options.contextGroups=[]] - Grupos de contexto a incluir en el mensaje de sistema
  * @param {Array} [options.tools] - Herramientas disponibles para el modelo
  * @param {Object} [options.toolMap] - Mapa de funciones para ejecutar herramientas {nombreHerramienta: función}
  * @param {string} [options.model="gemini-2.0-flash"] - Modelo a utilizar
@@ -76,6 +203,7 @@ export async function handleChatInteraction(options) {
   const {
     client,
     messages,
+    contextGroups = [],
     tools = [],
     toolMap = {},
     model = "gemini-2.0-flash",
@@ -87,7 +215,7 @@ export async function handleChatInteraction(options) {
   } = options;
 
   // Añadir mensajes de sistema predefinidos si no están ya presentes
-  const enhancedMessages = addSystemMessages(messages, { useMarkdown, useThinking });
+  const enhancedMessages = addSystemMessages(messages, { useMarkdown, useThinking, contextGroups });
 
   const initialResponse = await client.chat.completions.create({
     model,
@@ -100,21 +228,16 @@ export async function handleChatInteraction(options) {
 
   // Revisar si la respuesta contiene etiquetas think
   const initialContent = initialResponse.choices[0]?.message?.content || "";
-  if (initialContent) {
-    // Si contiene la etiqueta, mostramos el contexto
-    if (initialContent.includes("<think>")) {
-      const thinkPos = initialContent.indexOf("<think>");
-      const startContext = Math.max(0, thinkPos - 20);
-      const endContext = Math.min(initialContent.length, thinkPos + 30);
-    }
+  if (initialContent && initialContent.includes("<think>") && debug) {
+    const thinkPos = initialContent.indexOf("<think>");
+    const startContext = Math.max(0, thinkPos - 20);
+    const endContext = Math.min(initialContent.length, thinkPos + 30);
   }
 
   const assistantMessage = initialResponse.choices[0].message;
 
   // Si hay llamadas a herramientas, procesarlas antes de devolver el stream final
   if (assistantMessage.tool_calls && assistantMessage.tool_calls.length > 0) {
-    if (debug) console.log("Detectadas llamadas a herramientas");
-
     // Crea una copia de los mensajes para no modificar el original
     const updatedMessages = [...enhancedMessages, assistantMessage];
 

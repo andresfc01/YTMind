@@ -104,7 +104,7 @@ export async function PUT(request, context) {
           name: updatedAgent.name,
           description: updatedAgent.description,
           systemPrompt: updatedAgent.systemPrompt,
-          temperature: updatedAgent.temperature || 0.7, // Asegurar un valor por defecto
+          temperature: updatedAgent.temperature || 0.2, // Asegurar un valor por defecto
           model: updatedAgent.model,
           functions: updatedAgent.functions,
           usesAgents: updatedAgent.usesAgents,

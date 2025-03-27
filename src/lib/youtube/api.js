@@ -63,11 +63,25 @@ export async function getChannelIdFromUsername(username) {
  */
 export async function fetchChannelInfo(channelIdentifier) {
   try {
-    // Determinar si es un ID o un username
+    // Determinar si es un ID o un username/formato personalizado
     let channelId = channelIdentifier;
+
+    // Si es un ID de canal (comienza con UC), lo usamos directamente
     if (!channelIdentifier.startsWith("UC")) {
-      // Si no empieza con UC, asumimos que es un username
-      channelId = await getChannelIdFromUsername(channelIdentifier);
+      // Manejo de formatos de nombre de usuario
+      let username = channelIdentifier;
+
+      // Si comienza con @, c/ o user/, extraer el nombre de usuario
+      if (channelIdentifier.startsWith("@")) {
+        username = channelIdentifier.substring(1); // Quitar el @ del inicio
+      } else if (channelIdentifier.startsWith("c/")) {
+        username = channelIdentifier.substring(2); // Quitar el c/ del inicio
+      } else if (channelIdentifier.startsWith("user/")) {
+        username = channelIdentifier.substring(5); // Quitar el user/ del inicio
+      }
+
+      // Convertir el nombre de usuario a un ID de canal
+      channelId = await getChannelIdFromUsername(username);
     }
 
     // Validar que tenemos una API key

@@ -67,7 +67,7 @@ export async function POST(request) {
       name,
       description,
       systemPrompt,
-      temperature: temperature || 0.7,
+      temperature: temperature || 0.2,
       model: model || "gemini-2.0-flash",
       functions: functions || [], // Permitir funciones directamente
       usesAgents: usesAgents || [],

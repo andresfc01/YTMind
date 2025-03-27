@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { ChannelRepository } from "@/lib/db/repositories";
-import { extractChannelId } from "@/lib/utils/youtube";
+import { extractChannelId, isChannelUsername } from "@/lib/utils/youtube";
+import { getChannelInfo } from "@/lib/functions/youtubeAnalysis";
 
 /**
  * GET /api/channels
@@ -62,24 +63,76 @@ export async function POST(request) {
       return NextResponse.json({ error: "Channel URL is required" }, { status: 400 });
     }
 
-    // Extract channel ID from URL
-    const channelId = extractChannelId(data.url);
+    // Extract channel ID or username from URL
+    const channelIdentifier = extractChannelId(data.url);
 
-    if (!channelId) {
+    if (!channelIdentifier) {
       return NextResponse.json({ error: "Invalid YouTube channel URL" }, { status: 400 });
     }
 
-    // Check if channel already exists in database
-    let channel = await ChannelRepository.findByYouTubeId(channelId);
-
-    // If channel doesn't exist, create it
-    if (!channel) {
-      channel = await ChannelRepository.createFromYouTubeId(channelId);
+    // First try to find the channel in our database
+    let dbChannel;
+    try {
+      // If it's a channel ID (UC...), search directly
+      if (channelIdentifier.startsWith("UC")) {
+        dbChannel = await ChannelRepository.findByChannelId(channelIdentifier);
+      } else {
+        // For usernames, we need to check if we have stored the channel before
+        // by finding any channel that might contain this username in metadata.customUrl
+        const channels = await ChannelRepository.findAll({
+          "metadata.customUrl": { $regex: channelIdentifier.replace(/^@|^c\/|^user\//, "") },
+        });
+        if (channels && channels.length > 0) {
+          dbChannel = channels[0];
+        }
+      }
+    } catch (err) {
+      console.log("Channel not found in DB, will create a new one", err.message);
     }
 
-    return NextResponse.json(channel);
+    // If channel exists in our database, return it
+    if (dbChannel) {
+      console.log("Channel found in database, returning:", dbChannel.name);
+      return NextResponse.json(dbChannel);
+    }
+
+    // Channel not in DB, fetch from YouTube API
+    console.log("Fetching channel info from YouTube API for:", channelIdentifier);
+    const channelInfo = await getChannelInfo({
+      channelIdentifier: channelIdentifier,
+      fetchPopularVideos: true,
+    });
+
+    // Create a database record with the info from YouTube API
+    // Ensure we always have the required fields
+    const channelData = {
+      channelId: channelInfo.channelId,
+      name: channelInfo.name || `YouTube Channel (${channelIdentifier})`,
+      description: channelInfo.description || "",
+      statistics: channelInfo.statistics || {},
+      metadata: channelInfo.metadata || {},
+      analyzedAt: new Date(),
+    };
+
+    // Create the channel record in our database
+    try {
+      dbChannel = await ChannelRepository.create(channelData);
+      console.log("Created new channel in database:", dbChannel.name);
+    } catch (error) {
+      console.error("Error creating channel:", error);
+      return NextResponse.json(
+        {
+          error: `Failed to create channel: ${error.message}`,
+          details: channelData,
+        },
+        { status: 500 }
+      );
+    }
+
+    // Return the database document which has the _id field
+    return NextResponse.json(dbChannel);
   } catch (error) {
-    console.error("Error creating/fetching channel:", error);
+    console.error("Error processing channel:", error);
     return NextResponse.json({ error: error.message || "Server error" }, { status: 500 });
   }
 }

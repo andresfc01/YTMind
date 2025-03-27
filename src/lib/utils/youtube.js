@@ -24,9 +24,9 @@ export function extractVideoId(url) {
 }
 
 /**
- * Extract YouTube channel ID from a URL
+ * Extract YouTube channel ID or username from a URL
  * @param {string} url - The YouTube URL
- * @returns {string|null} - The channel ID or null if not found
+ * @returns {string|null} - The channel ID, username (with @ prefix), or null if not found
  */
 export function extractChannelId(url) {
   if (!url) return null;
@@ -37,8 +37,17 @@ export function extractChannelId(url) {
   const channelMatch = url.match(/youtube\.com\/channel\/([^&?\/]+)/);
   if (channelMatch) return channelMatch[1];
 
-  // Custom channel URL: Need to fetch the page and extract the channel ID
-  // This would require a server-side function as it needs to fetch HTML
+  // Username URL: https://www.youtube.com/@username
+  const usernameMatch = url.match(/youtube\.com\/@([^&?\/]+)/);
+  if (usernameMatch) return "@" + usernameMatch[1];
+
+  // Alternative username URL: https://www.youtube.com/c/username
+  const cMatch = url.match(/youtube\.com\/c\/([^&?\/]+)/);
+  if (cMatch) return "c/" + cMatch[1];
+
+  // Alternative username URL: https://www.youtube.com/user/username
+  const userMatch = url.match(/youtube\.com\/user\/([^&?\/]+)/);
+  if (userMatch) return "user/" + userMatch[1];
 
   return null;
 }
@@ -63,4 +72,16 @@ export function isYouTubeUrl(url) {
 export function getYouTubeThumbnailUrl(videoId) {
   if (!videoId) return null;
   return `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`;
+}
+
+/**
+ * Check if a channel identifier is a custom username (starts with @, c/, or user/)
+ * @param {string} channelIdentifier - The channel ID or username
+ * @returns {boolean} - Whether it's a custom username
+ */
+export function isChannelUsername(channelIdentifier) {
+  if (!channelIdentifier) return false;
+  return (
+    channelIdentifier.startsWith("@") || channelIdentifier.startsWith("c/") || channelIdentifier.startsWith("user/")
+  );
 }

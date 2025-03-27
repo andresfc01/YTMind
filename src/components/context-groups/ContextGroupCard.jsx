@@ -1,14 +1,69 @@
-import React from "react";
+import React, { useState, useRef } from "react";
 
 /**
  * Card component for displaying a context group
+ * Now with drag and drop functionality for adding to chat
  */
 export default function ContextGroupCard({ contextGroup, onViewDetails, onEdit, onDelete }) {
   const { name, description, items = [], metadata = {} } = contextGroup;
   const itemCount = items.length;
+  const [isDragging, setIsDragging] = useState(false);
+  const cardRef = useRef(null);
+
+  const handleDragStart = (e) => {
+    try {
+      // Set simple data first (fallback)
+      e.dataTransfer.setData("text/plain", name);
+
+      // Then try to set the complex data
+      const data = {
+        type: "context-group",
+        group: contextGroup,
+      };
+      e.dataTransfer.setData("application/json", JSON.stringify(data));
+      e.dataTransfer.effectAllowed = "copy";
+
+      // Set a drag image that looks better
+      if (cardRef.current) {
+        // Create a lightweight clone of the card for dragging
+        const dragImage = cardRef.current.cloneNode(true);
+        dragImage.style.width = `${cardRef.current.offsetWidth}px`;
+        dragImage.style.transform = "scale(0.8)";
+        dragImage.style.opacity = "0.8";
+        dragImage.style.position = "absolute";
+        dragImage.style.top = "-1000px";
+        dragImage.style.backgroundColor = "white";
+        document.body.appendChild(dragImage);
+
+        e.dataTransfer.setDragImage(dragImage, 20, 20);
+
+        // Remove the temporary element after drag starts
+        setTimeout(() => {
+          document.body.removeChild(dragImage);
+        }, 0);
+      }
+
+      // Update visual state
+      setIsDragging(true);
+    } catch (error) {
+      console.error("Error in drag start:", error);
+    }
+  };
+
+  const handleDragEnd = () => {
+    setIsDragging(false);
+  };
 
   return (
-    <div className="group relative overflow-hidden rounded-xl border border-gray-100 bg-white shadow-sm transition-all duration-200 hover:border-gray-200 hover:shadow-md">
+    <div
+      ref={cardRef}
+      className={`group relative overflow-hidden rounded-xl border ${
+        isDragging ? "border-blue-500 shadow-lg" : "border-gray-100 shadow-sm"
+      } bg-white transition-all duration-200 hover:border-gray-200 hover:shadow-md cursor-grab select-none`}
+      draggable="true"
+      onDragStart={handleDragStart}
+      onDragEnd={handleDragEnd}
+    >
       <div className="px-4 py-4">
         <div className="flex items-center space-x-4">
           <div
@@ -37,10 +92,15 @@ export default function ContextGroupCard({ contextGroup, onViewDetails, onEdit, 
               {itemCount} {itemCount === 1 ? "item" : "items"}
             </p>
           </div>
+
+          {/* These buttons should stop propagation to avoid triggering drag */}
           <div className="flex flex-shrink-0 items-start space-x-2 opacity-0 transition-opacity duration-200 group-hover:opacity-100">
             <button
-              onClick={() => onEdit(contextGroup)}
-              className="rounded-md p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
+              onClick={(e) => {
+                e.stopPropagation();
+                onEdit(contextGroup);
+              }}
+              className="rounded-md p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600 select-auto"
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -58,8 +118,11 @@ export default function ContextGroupCard({ contextGroup, onViewDetails, onEdit, 
               </svg>
             </button>
             <button
-              onClick={() => onDelete(contextGroup)}
-              className="rounded-md p-1 text-gray-400 hover:bg-gray-100 hover:text-red-600"
+              onClick={(e) => {
+                e.stopPropagation();
+                onDelete(contextGroup);
+              }}
+              className="rounded-md p-1 text-gray-400 hover:bg-gray-100 hover:text-red-600 select-auto"
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -79,13 +142,39 @@ export default function ContextGroupCard({ contextGroup, onViewDetails, onEdit, 
           </div>
         </div>
       </div>
-      <button
-        onClick={() => onViewDetails(contextGroup)}
-        className="mt-2 block w-full border-t border-gray-50 px-4 py-3 text-left text-sm font-medium"
-        style={{ backgroundColor: metadata.color || "#6366f1", color: "white" }}
-      >
-        View Details →
-      </button>
+      <div className="flex">
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            onViewDetails(contextGroup);
+          }}
+          className="flex-1 border-t border-gray-50 px-4 py-3 text-left text-sm font-medium select-auto"
+          style={{ backgroundColor: metadata.color || "#6366f1", color: "white" }}
+        >
+          View Details →
+        </button>
+        <div
+          className="border-t border-gray-50 px-3 py-3 flex items-center justify-center"
+          style={{ backgroundColor: metadata.color || "#6366f1", color: "white" }}
+          title="Drag to add to chat"
+          onMouseDown={(e) => e.stopPropagation()} // Prevent interference with drag
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            className="h-5 w-5"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"
+            />
+          </svg>
+        </div>
+      </div>
     </div>
   );
 }

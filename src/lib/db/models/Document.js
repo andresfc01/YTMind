@@ -21,7 +21,6 @@ const documentSchema = new mongoose.Schema({
   agentId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "Agent",
-    required: true,
   },
   createdAt: {
     type: Date,
@@ -36,11 +35,12 @@ const documentSchema = new mongoose.Schema({
 // Middleware para actualizar la fecha 'updatedAt' en cada actualización
 documentSchema.pre("save", function (next) {
   this.updatedAt = new Date();
-  console.log(
-    `Guardando documento "${this.name}" para el agente ${this.agentId} en la base de datos ${
-      mongoose.connection.db?.databaseName || "desconocida"
-    }`
-  );
+  const dbName = mongoose.connection.db?.databaseName || "desconocida";
+
+  // Handle optional agentId
+  const agentInfo = this.agentId ? `para el agente ${this.agentId}` : "sin agente asignado";
+
+  console.log(`Guardando documento "${this.name}" ${agentInfo} en la base de datos ${dbName}`);
   next();
 });
 

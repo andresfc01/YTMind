@@ -15,7 +15,7 @@ const MIN_TOKENS = 1;
 
 // Validar solicitud para chat
 function validateChatRequest(req) {
-  const { messages, temperature = 0.7, model = "gemini-2.0-flash", functions = [] } = req;
+  const { messages, temperature = 0.7, model = "gemini-2.0-flash", functions = [], contextGroups = [] } = req;
 
   if (!messages || !Array.isArray(messages) || messages.length === 0) {
     return { valid: false, error: "Se requiere al menos un mensaje" };
@@ -26,7 +26,7 @@ function validateChatRequest(req) {
     return { valid: false, error: "La temperatura debe estar entre 0 y 1" };
   }
 
-  return { valid: true, messages, temperature, model, functions };
+  return { valid: true, messages, temperature, model, functions, contextGroups };
 }
 
 /**
@@ -86,11 +86,22 @@ export async function POST(request) {
     // Obtener y validar los datos del cuerpo de la solicitud
     const requestData = await request.json();
 
-    const { valid, error, messages, temperature, model, functions } = validateChatRequest(requestData);
+    const { valid, error, messages, temperature, model, functions, contextGroups } = validateChatRequest(requestData);
 
     if (!valid) {
       console.error("Solicitud inválida:", error);
       return NextResponse.json({ error }, { status: 400 });
+    }
+
+    console.log(`Chat API received ${messages.length} messages and ${contextGroups?.length || 0} context groups`);
+
+    if (contextGroups && contextGroups.length > 0) {
+      console.log("Context group names:", contextGroups.map((g) => g.name).join(", "));
+
+      // Log first few chars of each message to check content
+      messages.forEach((msg, i) => {
+        console.log(`Message ${i} (${msg.role}) first 200 chars:`, msg.content.substring(0, 200));
+      });
     }
 
     // Crear herramientas desde las funciones
@@ -107,6 +118,7 @@ export async function POST(request) {
     const stream = await handleChatInteraction({
       client: openAIClient,
       messages,
+      contextGroups,
       tools,
       toolMap,
       model,

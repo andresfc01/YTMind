@@ -68,12 +68,17 @@ export default function Home() {
     const fetchContextGroups = async () => {
       try {
         setIsLoadingContextGroups(true);
+        console.log("Fetching context groups...");
         const response = await fetch("/api/context-groups");
+        console.log("Context groups API response status:", response.status);
+
         if (response.ok) {
           const data = await response.json();
+          console.log("Context groups loaded:", data);
           setContextGroups(data || []);
         } else {
-          console.error("Error al cargar los grupos de contexto");
+          const errorText = await response.text();
+          console.error("Error al cargar los grupos de contexto:", response.status, errorText);
         }
       } catch (error) {
         console.error("Error al cargar los grupos de contexto:", error);
@@ -269,7 +274,7 @@ export default function Home() {
   };
 
   // La funcionalidad principal de envío de mensajes
-  const handleSendMessage = async (content, role = "user") => {
+  const handleSendMessage = async (content, role = "user", activeContextGroups = []) => {
     if (!content.trim()) return;
 
     try {
@@ -336,10 +341,11 @@ export default function Home() {
       // Preparar datos para el API
       const apiData = {
         messages: allMessages,
+        contextGroups: activeContextGroups,
         temperature: 0.7,
-        model: "gemini-2.0-flash", // Usar el modelo solicitado
-        useMarkdown: true, // Habilitar formateo Markdown
-        useThinking: true, // Habilitar Chain of Thought con etiquetas <think>
+        model: "gemini-2.0-flash",
+        useMarkdown: true,
+        useThinking: true,
       };
 
       // Si hay un agente seleccionado, incluirlo
@@ -392,6 +398,8 @@ export default function Home() {
 
         // Cuando termina el streaming, agregamos el mensaje completo
         if (accumulatedResponse) {
+          console.log("Received complete response - first 100 chars:", accumulatedResponse.substring(0, 100));
+
           const assistantMessage = {
             role: "assistant",
             content: accumulatedResponse,
@@ -544,6 +552,7 @@ export default function Home() {
         partialResponse={partialResponse}
         onExampleClick={handleExampleClick}
         onEditMessage={handleEditMessage}
+        contextGroups={contextGroups}
       />
     </RootLayout>
   );

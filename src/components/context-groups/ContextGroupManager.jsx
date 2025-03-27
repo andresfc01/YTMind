@@ -57,18 +57,68 @@ export default function ContextGroupManager({ contextGroups = [], onContextGroup
         id: null,
       };
 
-      const itemResponse = await fetch(`/api/${itemData.type}s`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ url: itemData.url }),
-      });
+      // Handle document upload
+      if (itemData.type === "document" && itemData.document) {
+        console.log("Processing document upload:", itemData.document.name, "type:", itemData.document.fileType);
 
-      if (!itemResponse.ok) {
-        throw new Error(`Failed to create ${itemData.type}: ${itemResponse.status}`);
+        try {
+          const documentResponse = await fetch(`/api/documents`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(itemData.document),
+          });
+
+          const responseText = await documentResponse.text();
+          console.log("Document API response:", responseText);
+
+          if (!documentResponse.ok) {
+            throw new Error(`Failed to create document: ${documentResponse.status} - ${responseText}`);
+          }
+
+          // Parse the response as JSON
+          const document = JSON.parse(responseText);
+
+          if (!document || !document._id) {
+            console.error("Document response missing _id:", document);
+            throw new Error("Document creation response missing _id field");
+          }
+
+          console.log("Document created successfully with ID:", document._id);
+          itemToAdd.id = document._id;
+        } catch (error) {
+          console.error("Error creating document:", error);
+          throw error;
+        }
+      } else {
+        // Handle URL-based content (video, channel, url)
+
+        // Make sure itemData.type is valid (temporary fix to avoid errors)
+        if (!["video", "channel", "url"].includes(itemData.type)) {
+          throw new Error(`Invalid item type: ${itemData.type}`);
+        }
+
+        const itemResponse = await fetch(`/api/${itemData.type}s`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ url: itemData.url }),
+        });
+
+        if (!itemResponse.ok) {
+          const errorText = await itemResponse.text();
+          throw new Error(`Failed to create ${itemData.type}: ${itemResponse.status} - ${errorText}`);
+        }
+
+        const item = await itemResponse.json();
+
+        // Check if the item has the expected MongoDB _id field
+        if (!item || !item._id) {
+          throw new Error(`Response from ${itemData.type}s API is missing _id field`);
+        }
+
+        itemToAdd.id = item._id;
       }
 
-      const item = await itemResponse.json();
-      itemToAdd.id = item._id;
+      console.log("Adding item to context group:", itemToAdd);
 
       const response = await fetch(`/api/context-groups/${groupId}/items`, {
         method: "POST",
@@ -77,7 +127,8 @@ export default function ContextGroupManager({ contextGroups = [], onContextGroup
       });
 
       if (!response.ok) {
-        throw new Error(`Failed to add item to context group: ${response.status}`);
+        const errorText = await response.text();
+        throw new Error(`Failed to add item to context group: ${response.status} - ${errorText}`);
       }
 
       const updatedGroup = await response.json();

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { VideoRepository } from "@/lib/db/repositories";
 import { extractVideoId } from "@/lib/utils/youtube";
+import { getVideoDetails } from "@/lib/functions/getVideoDetails";
 
 /**
  * Endpoint para listar videos con filtros opcionales
@@ -72,13 +73,11 @@ export async function POST(request) {
       return NextResponse.json({ error: "Invalid YouTube video URL" }, { status: 400 });
     }
 
-    // Check if video already exists in database
-    let video = await VideoRepository.findByYouTubeId(videoId);
-
-    // If video doesn't exist, create it
-    if (!video) {
-      video = await VideoRepository.createFromYouTubeId(videoId);
-    }
+    // Use getVideoDetails which handles checking database and fetching from YouTube API
+    const video = await getVideoDetails({
+      videoId,
+      includeTranscript: false,
+    });
 
     return NextResponse.json(video);
   } catch (error) {

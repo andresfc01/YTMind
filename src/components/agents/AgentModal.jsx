@@ -12,7 +12,7 @@ const AgentModal = ({ isOpen, agent, onClose, onSubmit }) => {
   const [name, setName] = useState(agent?.name || "");
   const [description, setDescription] = useState(agent?.description || "");
   const [systemPrompt, setSystemPrompt] = useState(agent?.systemPrompt || "");
-  const [temperature, setTemperature] = useState(agent?.temperature || 0.7);
+  const [temperature, setTemperature] = useState(agent?.temperature || 0.2);
   const [model, setModel] = useState(agent?.model || "gemini-2.0-flash");
   const [category, setCategory] = useState(agent?.category || "general");
   const [icon, setIcon] = useState(agent?.icon || "bot");
@@ -62,7 +62,7 @@ const AgentModal = ({ isOpen, agent, onClose, onSubmit }) => {
       setName(agent.name || "");
       setDescription(agent.description || "");
       setSystemPrompt(agent.systemPrompt || "");
-      setTemperature(agent.temperature || 0.7);
+      setTemperature(agent.temperature || 0.2);
       setModel(agent.model || "gemini-2.0-flash");
       setCategory(agent.category || "general");
       setIcon(agent.icon || "bot");

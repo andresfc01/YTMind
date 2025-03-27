@@ -35,7 +35,7 @@ export default function AgentManager({ onSelectAgent, selectedAgentId, onCreateN
             name: agent.name || "Agente sin nombre",
             description: agent.description || "Sin descripción",
             systemPrompt: agent.systemPrompt || "",
-            temperature: typeof agent.temperature === "number" ? agent.temperature : 0.7,
+            temperature: typeof agent.temperature === "number" ? agent.temperature : 0.2,
             model: agent.model || "gemini-2.0-flash",
             category: agent.category || "general",
             icon: agent.icon || "bot",
@@ -133,7 +133,7 @@ export default function AgentManager({ onSelectAgent, selectedAgentId, onCreateN
       // Enviamos TODOS los datos, incluyendo las funciones
       const dataToSend = {
         ...formData,
-        temperature: parseFloat(formData.temperature) || 0.7,
+        temperature: parseFloat(formData.temperature) || 0.2,
       };
 
       // Actualizamos el agente con todos sus datos en una sola operación

@@ -48,41 +48,56 @@ export async function POST(request) {
   try {
     // Extraer datos del cuerpo de la solicitud
     const body = await request.json();
-    const { name, description, content, fileType, agentId } = body;
+    const { name, description, content, fileType } = body;
 
-    // Validación básica
-    if (!name || !content || !agentId) {
-      return NextResponse.json(
-        { error: "Se requieren name, content y agentId para crear un documento" },
-        { status: 400 }
-      );
+    // Validación básica - solo nombre y contenido son requeridos
+    if (!name || !content) {
+      return NextResponse.json({ error: "Se requieren name y content para crear un documento" }, { status: 400 });
     }
 
-    // Crear el documento
+    // Crear el documento - agentId es opcional
     const documentData = {
       name,
       description: description || "",
       content,
       fileType: fileType || "text",
-      agentId,
     };
 
-    const document = await DocumentRepository.create(documentData);
+    // Solo añadir agentId si está presente en la solicitud
+    if (body.agentId) {
+      documentData.agentId = body.agentId;
+    }
 
-    return NextResponse.json({
-      message: "Documento creado correctamente",
-      document: {
-        id: document._id.toString(),
+    console.log("Creating document:", name, "with file type:", fileType);
+
+    try {
+      const document = await DocumentRepository.create(documentData);
+
+      // Retornar el documento creado con el formato esperado por la aplicación
+      return NextResponse.json({
+        _id: document._id,
         name: document.name,
         description: document.description,
         fileType: document.fileType,
-        agentId: document.agentId.toString(),
         createdAt: document.createdAt,
         updatedAt: document.updatedAt,
-      },
-    });
+      });
+    } catch (dbError) {
+      console.error("Database error creating document:", dbError);
+      return NextResponse.json(
+        {
+          error: `Error al crear documento: ${dbError.message}`,
+        },
+        { status: 500 }
+      );
+    }
   } catch (error) {
     console.error("Error al crear documento:", error);
-    return NextResponse.json({ error: "Error al crear documento" }, { status: 500 });
+    return NextResponse.json(
+      {
+        error: `Error al crear documento: ${error.message}`,
+      },
+      { status: 500 }
+    );
   }
 }

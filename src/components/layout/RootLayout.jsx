@@ -63,9 +63,9 @@ export default function RootLayout({
       {/* Sidebar - fixed on desktop, sliding panel on mobile */}
       <div
         className={`
-          fixed md:relative inset-y-0 left-0 z-40
-          w-sidebar max-w-sidebar md:max-w-sidebar
-          h-full flex-shrink-0 flex flex-col
+          fixed md:sticky md:top-0 inset-y-0 left-0 z-40
+          w-64 md:w-64 flex-none
+          h-full flex flex-col
           bg-background-primary border-r border-white/10
           transform transition-transform duration-200 ease-in-out
           ${isSidebarOpen ? "translate-x-0" : "-translate-x-full"}

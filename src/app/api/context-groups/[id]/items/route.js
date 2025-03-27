@@ -6,14 +6,16 @@ import mongoose from "mongoose";
  * GET /api/context-groups/[id]/items
  * Get all items in a context group with their details
  */
-export async function GET(request, { params }) {
+export async function GET(request, context) {
   try {
-    const { id } = params;
+    const params = await context.params;
+    const id = params.id;
+
     const items = await ContextGroupRepository.getItemsWithDetails(id);
 
     return NextResponse.json(items);
   } catch (error) {
-    console.error(`Error fetching items from context group ${params.id}:`, error);
+    console.error(`Error fetching items from context group:`, error);
     return NextResponse.json(
       { error: "Failed to fetch items from context group", details: error.message },
       { status: 500 }
@@ -25,9 +27,11 @@ export async function GET(request, { params }) {
  * POST /api/context-groups/[id]/items
  * Add an item to a context group
  */
-export async function POST(request, { params }) {
+export async function POST(request, context) {
   try {
-    const { id } = params;
+    const params = await context.params;
+    const id = params.id;
+
     const data = await request.json();
 
     // Validate required fields
@@ -54,7 +58,7 @@ export async function POST(request, { params }) {
 
     return NextResponse.json(contextGroup);
   } catch (error) {
-    console.error(`Error adding item to context group ${params.id}:`, error);
+    console.error(`Error adding item to context group:`, error);
     return NextResponse.json({ error: "Failed to add item to context group", details: error.message }, { status: 500 });
   }
 }
