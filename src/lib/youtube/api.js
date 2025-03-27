@@ -16,6 +16,30 @@ export async function getChannelIdFromUsername(username) {
       throw new Error("No se ha configurado YOUTUBE_API_KEY en las variables de entorno");
     }
 
+    // Si el username comienza con @, intentar directamente con la API moderna
+    if (username.startsWith("@")) {
+      // Usar directamente el handle con @ en la API de búsqueda
+      const searchUrl = `https://www.googleapis.com/youtube/v3/search?part=snippet&type=channel&q=${encodeURIComponent(
+        username
+      )}&key=${process.env.YOUTUBE_API_KEY}`;
+      const searchResponse = await fetch(searchUrl);
+
+      if (!searchResponse.ok) {
+        const errorData = await searchResponse.json();
+        throw new Error(`Error en la API de YouTube: ${errorData.error?.message || searchResponse.statusText}`);
+      }
+
+      const searchData = await searchResponse.json();
+
+      if (!searchData.items || searchData.items.length === 0) {
+        throw new Error(`No se encontró el canal con handle: ${username}`);
+      }
+
+      // Devolver el ID del primer resultado
+      return searchData.items[0].id.channelId;
+    }
+
+    // Para usernames sin @, intentar primero con forUsername (método antiguo)
     // Construir la URL de la API usando forUsername
     const apiUrl = `https://www.googleapis.com/youtube/v3/channels?part=id&forUsername=${username}&key=${process.env.YOUTUBE_API_KEY}`;
 
@@ -73,15 +97,40 @@ export async function fetchChannelInfo(channelIdentifier) {
 
       // Si comienza con @, c/ o user/, extraer el nombre de usuario
       if (channelIdentifier.startsWith("@")) {
-        username = channelIdentifier.substring(1); // Quitar el @ del inicio
+        // Para handles con @ no eliminamos el @ ya que la API los acepta directamente
+        username = channelIdentifier;
       } else if (channelIdentifier.startsWith("c/")) {
         username = channelIdentifier.substring(2); // Quitar el c/ del inicio
       } else if (channelIdentifier.startsWith("user/")) {
         username = channelIdentifier.substring(5); // Quitar el user/ del inicio
       }
 
-      // Convertir el nombre de usuario a un ID de canal
-      channelId = await getChannelIdFromUsername(username);
+      // Intentar buscar por canal directamente con el handle (@username)
+      try {
+        const searchUrl = `https://www.googleapis.com/youtube/v3/search?part=snippet&type=channel&q=${encodeURIComponent(
+          username
+        )}&key=${process.env.YOUTUBE_API_KEY}`;
+        const searchResponse = await fetch(searchUrl);
+
+        if (!searchResponse.ok) {
+          const errorData = await searchResponse.json();
+          throw new Error(`Error en la API de YouTube: ${errorData.error?.message || searchResponse.statusText}`);
+        }
+
+        const searchData = await searchResponse.json();
+
+        if (searchData.items && searchData.items.length > 0) {
+          channelId = searchData.items[0].id.channelId;
+          console.log(`Canal encontrado para ${username}: ${channelId}`);
+        } else {
+          // Si falla, intentar el método anterior
+          channelId = await getChannelIdFromUsername(username.replace(/^@/, ""));
+        }
+      } catch (searchError) {
+        console.warn(`Error buscando canal con handle ${username}:`, searchError);
+        // Intentar el método anterior como respaldo
+        channelId = await getChannelIdFromUsername(username.replace(/^@/, ""));
+      }
     }
 
     // Validar que tenemos una API key

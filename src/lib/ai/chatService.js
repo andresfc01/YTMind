@@ -103,14 +103,14 @@ function buildSystemMessage(options = {}) {
 
   if (useThinking) {
     content +=
-      "When solving problems, use Chain of Draft reasoning inside <think> tags. Always start with a <think> XML tag followed by a brief outline of your approach - use concise steps (5-7 words per step) to frame your thinking.\n\n" +
-      "For example:\n" +
+      "When solving problems, use Chain of Draft reasoning inside <think> tags. Start with a <script> XML tag followed by a brief outline of your approach - use concise steps (5-7 words per step) to frame your thinking.\n\n" +
       "<think>\n" +
-      "1. Understand the YouTube analysis request\n" +
-      "2. Identify key metrics needed\n" +
-      "3. Analyze channel performance data\n" +
-      "4. Compare with industry benchmarks\n" +
-      "5. Provide actionable recommendations\n" +
+      "<script>\n" +
+      "1. Step one (brief description)\n" +
+      "2. Step two (brief description)\n" +
+      "3. Step three (brief description)\n" +
+      "4. Step four (brief description)\n" +
+      "</script>\n" +
       "</think>\n\n";
   }
 
@@ -217,27 +217,40 @@ export async function handleChatInteraction(options) {
   // Añadir mensajes de sistema predefinidos si no están ya presentes
   const enhancedMessages = addSystemMessages(messages, { useMarkdown, useThinking, contextGroups });
 
-  const initialResponse = await client.chat.completions.create({
+  if (debug) {
+    console.log("Using model:", model);
+    console.log("Using tools:", tools.length > 0 ? tools.map((t) => t.function?.name || t.type).join(", ") : "none");
+  }
+
+  // Configuración para la solicitud inicial
+  const initialRequestConfig = {
     model,
     messages: enhancedMessages,
-    tools: tools.length > 0 ? tools : undefined,
-    tool_choice: tools.length > 0 ? "auto" : undefined,
-    stream: false,
     temperature: 0.1, // Baja temperatura para decisiones
-  });
+    stream: false,
+  };
 
-  // Revisar si la respuesta contiene etiquetas think
-  const initialContent = initialResponse.choices[0]?.message?.content || "";
-  if (initialContent && initialContent.includes("<think>") && debug) {
-    const thinkPos = initialContent.indexOf("<think>");
-    const startContext = Math.max(0, thinkPos - 20);
-    const endContext = Math.min(initialContent.length, thinkPos + 30);
+  // Añadir configuración de tools solo si están disponibles
+  if (tools && tools.length > 0) {
+    initialRequestConfig.tools = tools;
+    // Para OpenAI se usa tool_choice, para Gemini podría ser diferente
+    if (model.includes("gpt")) {
+      initialRequestConfig.tool_choice = "auto";
+    } else {
+      // Para modelos Gemini u otros, ajustar según su API
+      initialRequestConfig.tool_choice = "auto";
+    }
   }
+
+  // Realizar la solicitud inicial
+  const initialResponse = await client.chat.completions.create(initialRequestConfig);
 
   const assistantMessage = initialResponse.choices[0].message;
 
   // Si hay llamadas a herramientas, procesarlas antes de devolver el stream final
   if (assistantMessage.tool_calls && assistantMessage.tool_calls.length > 0) {
+    if (debug) console.log(`Detected ${assistantMessage.tool_calls.length} tool calls`);
+
     // Crea una copia de los mensajes para no modificar el original
     const updatedMessages = [...enhancedMessages, assistantMessage];
 
@@ -319,7 +332,6 @@ export async function handleChatInteraction(options) {
     }
   } else {
     // No hay llamadas a herramientas, devolver stream directamente
-    // Pero en este caso no incluimos el mensaje del asistente que ya tenemos, para evitar duplicación
     try {
       return client.chat.completions.create({
         model,
