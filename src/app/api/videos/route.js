@@ -76,7 +76,7 @@ export async function POST(request) {
     // Use getVideoDetails which handles checking database and fetching from YouTube API
     const video = await getVideoDetails({
       videoId,
-      includeTranscript: false,
+      includeTranscript: true,
     });
 
     return NextResponse.json(video);

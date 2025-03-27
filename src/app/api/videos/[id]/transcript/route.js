@@ -14,7 +14,7 @@ export async function GET(request, { params }) {
     }
 
     // Intentar obtener el video y su transcripción
-    const videoDetails = await getVideoDetails({ videoId: id, includeTranscript: false });
+    const videoDetails = await getVideoDetails({ videoId: id, includeTranscript: true });
 
     if (!videoDetails) {
       return NextResponse.json({ error: "No se encontró el video con el ID proporcionado" }, { status: 404 });

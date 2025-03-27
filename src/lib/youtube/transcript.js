@@ -32,6 +32,8 @@ export async function getVideoTranscript(videoId) {
   }
 }
 
+const TRANSFORM_TRANSCRIPT = false;
+
 /**
  * Obtiene y formatea la transcripción de un video de YouTube
  * @param {string} videoId - ID del video de YouTube
@@ -47,7 +49,7 @@ export async function getFormattedVideoTranscript(videoId) {
     }
 
     // Si la transcripción es muy larga (más de 30000 caracteres), solo limpiar saltos de línea
-    if (rawTranscript.length > 30000) {
+    if (!TRANSFORM_TRANSCRIPT && rawTranscript.length > 30000) {
       console.log(
         `Transcripción para el video ${videoId} es muy larga (${rawTranscript.length} caracteres). Aplicando limpieza básica.`
       );
