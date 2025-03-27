@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from "react";
-import ContextGroupList from "./ContextGroupList";
-import ContextGroupDetails from "./ContextGroupDetails";
+import ContextGroupSelector from "./ContextGroupSelector";
 import ContextGroupModal from "./ContextGroupModal";
+import ContextGroupDetails from "./ContextGroupDetails";
 import ReactDOM from "react-dom";
 
 /**
  * Main component for managing context groups
  */
-export default function ContextGroupManager({ contextGroups = [], onContextGroupsChange }) {
+export default function ContextGroupManager({ contextGroups = [], onContextGroupsChange, isSidebar = false }) {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
   const [createModalOpen, setCreateModalOpen] = useState(false);
@@ -208,6 +208,21 @@ export default function ContextGroupManager({ contextGroups = [], onContextGroup
     );
   };
 
+  if (isSidebar) {
+    return (
+      <>
+        <ContextGroupSelector
+          contextGroups={localContextGroups}
+          onViewDetails={handleViewDetails}
+          onEdit={handleEdit}
+          isLoading={isLoading}
+          error={error}
+        />
+        {renderModals()}
+      </>
+    );
+  }
+
   return (
     <div className="container mx-auto px-4 py-6">
       <div className="mb-6 flex items-center justify-between">
@@ -254,13 +269,88 @@ export default function ContextGroupManager({ contextGroups = [], onContextGroup
         </div>
       )}
 
-      <ContextGroupList
-        contextGroups={localContextGroups}
-        onEdit={handleEdit}
-        onViewDetails={handleViewDetails}
-        isLoading={isLoading}
-        error={error}
-      />
+      <div className="grid w-full grid-cols-1 gap-6">
+        {isLoading ? (
+          <div className="flex h-32 items-center justify-center">
+            <div className="h-8 w-8 animate-spin rounded-full border-4 border-indigo-500 border-t-transparent"></div>
+          </div>
+        ) : localContextGroups.length === 0 ? (
+          <div className="flex h-[400px] items-center justify-center rounded-lg border-2 border-dashed border-gray-300 bg-white">
+            <div className="text-center">
+              <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"
+                />
+              </svg>
+              <h3 className="mt-2 text-sm font-medium text-gray-900">No context groups</h3>
+              <p className="mt-1 text-sm text-gray-500">Get started by creating a new group</p>
+            </div>
+          </div>
+        ) : (
+          localContextGroups.map((group) => (
+            <div
+              key={group._id}
+              className="group flex cursor-pointer items-center justify-between rounded-lg border border-gray-200 bg-white p-4 shadow-sm transition-all hover:border-gray-300 hover:shadow"
+              onClick={() => handleViewDetails(group)}
+            >
+              <div className="flex items-center space-x-4">
+                <div
+                  className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded"
+                  style={{ backgroundColor: group.metadata?.color || "#6366f1" }}
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="h-5 w-5 text-white"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"
+                    />
+                  </svg>
+                </div>
+                <div className="min-w-0 flex-1">
+                  <h3 className="truncate text-sm font-medium text-gray-900">{group.name}</h3>
+                  <p className="mt-1 truncate text-sm text-gray-500">
+                    {group.items?.length || 0} {group.items?.length === 1 ? "item" : "items"}
+                  </p>
+                </div>
+              </div>
+              <div className="ml-4 flex items-center space-x-2 opacity-0 transition-opacity group-hover:opacity-100">
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleEdit(group);
+                  }}
+                  className="rounded-md p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="h-4 w-4"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"
+                    />
+                  </svg>
+                </button>
+              </div>
+            </div>
+          ))
+        )}
+      </div>
 
       {renderModals()}
     </div>
