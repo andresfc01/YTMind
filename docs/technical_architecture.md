@@ -191,12 +191,123 @@ YTMind follows a modern web application architecture with the following componen
   },
   analysis: {
     topics: [String], // Topics covered in the video
-    keywords: [String], // Extracted keywords
-    thumbnailAnalysis: String, // Analysis of thumbnail
-    titleAnalysis: String, // Analysis of title pattern
-    hooks: [String], // Identified hooks in the video
-    callToActions: [String] // Identified CTAs in the video
-    scriptAnalysis: {}
+    thumbnailAnalysis: {
+      summary: String, // General descriptive summary
+      elements: {
+        visual_composition: {
+          focus_point: String,
+          contrast_quality: String,
+          composition_type: String
+        },
+        color_strategy: {
+          primary_colors: [String],
+          color_harmony: String,
+          brightness_score: Number
+        },
+        text_elements: {
+          word_count: Number,
+          font_style: String
+        },
+        faces: {
+          present: Boolean,
+          count: Number,
+          expressions: [String]
+        },
+        psychological_triggers: {
+          curiosity_gap: String,
+          emotional_appeal: String,
+          urgency_elements: String
+        },
+        artistic_style: {
+          style_type: String, // realista, cartoon, pintura, 3D, etc.
+          lighting_style: String,
+          visual_mood: String // oscuro, luminoso, enérgico, etc.
+        },
+        thumbnail_title_synergy: {
+          complementary_elements: String, // cómo se complementan
+          curiosity_balance: String, // cómo distribuyen la curiosidad entre título y miniatura
+          redundancy_assessment: String // si repiten información o la distribuyen bien
+        }
+      }
+    },
+    titleAnalysis: {
+      summary: String, // General analysis of the title
+      elements: {
+        keywords: {
+          seo_keywords: [String],
+          buzzwords: [String],
+          power_words: [String]
+        },
+        emotional_triggers: {
+          primary_emotion: String, // curiosidad, miedo, deseo, etc.
+          curiosity_factor: String,
+          urgency_elements: String
+        },
+        techniques: {
+          primary_technique: String, // autoridad, contraste, controversia, etc.
+          secondary_techniques: [String],
+          effectiveness_notes: String
+        },
+        styling: {
+          capitalization: String, // standard, all-caps buzzwords, lowercase, etc.
+          style_approach: String // "try hard" or "no try" style
+        }
+      }
+    },
+    scriptAnalysis: {
+      summary: String, // General analysis of the script
+      elements: {
+        hooks: {
+          intro_hook: {
+            hook_type: String, // curiosity loop, problem-solution, impactful statement, personal story
+            effectiveness: String, // How well the hook works
+            timing: String // When the hook appears (seconds into video)
+          },
+          narrative_hooks: [String], // Additional hooks used throughout the video to maintain interest
+          pattern_hooks: String // Recurring hook structures or patterns used
+        },
+        storytelling: {
+          story_structure: String, // Modern Narrative Arc, CART, etc.
+          moment_of_change: String, // The 5-second moment or transformation
+          narrative_techniques: [String], // Backpacks, Crystal Balls, Camouflage Bombs, etc.
+          emotional_elements: [String] // Types of emotions evoked
+        },
+        script_structure: {
+          intro_quality: String, // Assessment of the introduction
+          body_organization: String, // How well the main content is structured
+          outro_effectiveness: String, // Assessment of the conclusion
+          transitions: String // How well sections connect
+        },
+        call_to_actions: {
+          types: [String], // Types of CTAs (subscribe, like, comment, visit website, etc.)
+          placement: [String], // Where CTAs appear in the video (intro, middle, outro)
+          delivery_style: String, // How CTAs are presented (direct, subtle, with incentive, etc.)
+          frequency: Number // How many CTAs are used in the video
+        },
+        psychological_elements: {
+          tension_resolution: String, // How tension is built and resolved
+          stakes: String, // What's at risk in the content
+          expectation_management: String // How expectations are set and met
+        },
+        delivery: {
+          pacing: String, // Speed and rhythm of content delivery
+          clarity: String, // How clearly information is presented
+          engagement_techniques: [String] // Specific techniques to maintain engagement
+        },
+        writing_style: {
+          tone: String, // Formal, conversational, educational, enthusiastic, etc.
+          vocabulary_level: String, // Simple, advanced, technical, etc.
+          sentence_structure: String, // Short and punchy, complex, varied, etc.
+          rhetorical_devices: [String] // Metaphors, analogies, repetition, etc.
+        },
+        audience_approach: {
+          address_style: String, // Direct ("you"), inclusive ("we"), third-person, etc.
+          assumed_knowledge: String, // What knowledge level is assumed of the audience
+          audience_relationship: String, // How the creator positions themselves relative to audience (expert, peer, guide)
+          persuasion_techniques: [String] // Specific techniques used to persuade the audience
+        }
+      }
+    }
   },
   analyzedAt: Date,
   createdAt: Date,
@@ -328,93 +439,4 @@ YTMind follows a modern web application architecture with the following componen
 
 - `POST /api/documents` - Upload a new document
 - `GET /api/documents` - Get all documents
-- `GET /api/documents/:id` - Get a specific document
-- `DELETE /api/documents/:id` - Delete a document
-- `POST /api/documents/:id/process` - Process a document for context use
-
-### URL Endpoints
-
-- `POST /api/urls` - Add a new URL
-- `GET /api/urls` - Get all URLs
-- `GET /api/urls/:id` - Get a specific URL
-- `DELETE /api/urls/:id` - Delete a URL
-- `POST /api/urls/:id/process` - Process a URL for context use
-
-## External Services
-
-### YouTube Data API
-
-- Used to fetch channel and video data
-- Required for channel analysis functionality
-
-### Gemini API
-
-- Primary AI model for chat and content generation
-- Configurable to use different models
-
-## Data Flow
-
-1. **Document Context Flow**
-
-   - User uploads a document via the UI
-   - System stores document in MongoDB
-   - Document is processed for context use (chunking, indexing)
-   - User can assign document to an agent as context
-   - During chat, document context is provided to the AI model
-
-2. **URL Context Flow**
-
-   - User adds a URL via the UI
-   - System fetches and extracts content from the URL
-   - URL content is processed for context use (chunking, indexing)
-   - User can assign URL to an agent as context
-   - During chat, URL context is provided to the AI model
-
-3. **Context Group Flow**
-
-   - User creates a context group and gives it a name
-   - User adds items (videos, channels, documents, URLs) to the group
-   - User selects a context group when starting a chat
-   - System retrieves all items in the group
-   - All group items are provided as context to the AI model
-   - Group can be reused across multiple chats
-   - User can update group contents over time
-
-4. **Function Implementation Flow**
-
-   - Developer creates function implementations in the codebase
-   - Functions are made available for assignment to agents
-   - User creates or modifies agent, assigning functions
-   - During chat, agent can execute assigned functions
-
-5. **Channel Analysis Flow**
-
-   - User requests channel analysis via chat
-   - System fetches channel data from YouTube API
-   - Data is processed and stored in MongoDB
-   - AI generates analysis summary
-   - Results are presented to user in chat
-
-6. **Content Generation Flow**
-
-   - User requests content generation
-   - System retrieves relevant channel/video data from MongoDB
-   - AI generates content based on stored data and user request
-   - Generated content is presented to user in chat
-
-7. **Agent Interaction Flow**
-
-   - User selects or creates an agent
-   - System loads agent configuration and context
-   - User interacts with the agent via chat
-   - Agent executes functions as needed
-   - Agent may use other specialized agents for specific tasks
-   - Agent responses are based on its specialized configuration, functions, and context
-
-8. **Multi-Agent Collaboration Flow**
-
-   - Primary agent receives user request
-   - Primary agent determines if specialized agents are needed
-   - Primary agent delegates specific tasks to specialized agents
-   - Specialized agents process their tasks and return results
-   - Primary agent integrates results and provides final response to user
+- `
