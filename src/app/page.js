@@ -5,6 +5,23 @@ import RootLayout from "@/components/layout/RootLayout";
 import ChatContainer from "@/components/chat/ChatContainer";
 import ChatMessage from "@/components/chat/ChatMessage";
 
+// Utility function to read a file as base64
+const readFileAsBase64 = (file) => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = () => {
+      const base64String = reader.result;
+      // Remove the data URL prefix (e.g., "data:image/jpeg;base64,")
+      const base64Data = base64String.split(",")[1];
+      resolve(base64Data);
+    };
+    reader.onerror = (error) => {
+      reject(error);
+    };
+  });
+};
+
 export default function Home() {
   const [messages, setMessages] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -274,8 +291,8 @@ export default function Home() {
   };
 
   // La funcionalidad principal de envío de mensajes
-  const handleSendMessage = async (content, role = "user", activeContextGroups = []) => {
-    if (!content.trim()) return;
+  const handleSendMessage = async (content, role = "user", activeContextGroups = [], uploadedImages = []) => {
+    if (!content.trim() && uploadedImages.length === 0) return;
 
     try {
       // Crear un nuevo mensaje
@@ -338,6 +355,28 @@ export default function Home() {
       // Obtener todos los mensajes para enviar al API
       const allMessages = [...messages, newMessage];
 
+      // Procesar las imágenes para enviar
+      let processedImages = [];
+      if (uploadedImages && uploadedImages.length > 0) {
+        processedImages = await Promise.all(
+          uploadedImages.map(async (img) => {
+            try {
+              // Convert the image to base64
+              const base64Data = await readFileAsBase64(img.file);
+              return {
+                ...img,
+                base64: base64Data,
+              };
+            } catch (error) {
+              console.error("Error processing image:", error);
+              return null;
+            }
+          })
+        );
+        // Filter out any null entries from failed conversions
+        processedImages = processedImages.filter(Boolean);
+      }
+
       // Preparar datos para el API
       const apiData = {
         messages: allMessages,
@@ -346,6 +385,7 @@ export default function Home() {
         model: "gemini-2.0-flash",
         useMarkdown: true,
         useThinking: true,
+        images: processedImages,
       };
 
       // Si hay un agente seleccionado, incluirlo

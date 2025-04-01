@@ -147,19 +147,23 @@ export default function ChatContainer({
   };
 
   // Handle sending a message with context
-  const handleSendMessageWithContext = (message, role = "user") => {
-    console.log(`Sending message with ${activeContextGroups.length} active context groups`);
+  const handleSendMessageWithContext = (message, images = [], role = "user") => {
+    console.log(`Sending message with ${activeContextGroups.length} active context groups and ${images.length} images`);
     if (activeContextGroups.length > 0) {
       console.log("Active context group names:", activeContextGroups.map((g) => g.name).join(", "));
       console.log("First active context group sample:", JSON.stringify(activeContextGroups[0]).substring(0, 200));
     }
 
+    if (images.length > 0) {
+      console.log(`Including ${images.length} images with the message`);
+    }
+
     if (role === "system") {
       // For system messages, pass through as is
-      onSendMessage(message, role, activeContextGroups);
+      onSendMessage(message, role, activeContextGroups, images);
     } else {
       // For user messages, pass the active context groups separately
-      onSendMessage(message, role, activeContextGroups);
+      onSendMessage(message, role, activeContextGroups, images);
     }
   };
 

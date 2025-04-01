@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
-import { FiSend, FiHash, FiPlusCircle } from "react-icons/fi";
+import { FiSend, FiHash, FiPlusCircle, FiImage, FiX } from "react-icons/fi";
 
 /**
  * ChatInput component with professional UX for context groups
@@ -18,9 +18,11 @@ export default function ChatInput({
   const [mentionPosition, setMentionPosition] = useState({ top: 0, left: 0 });
   const [dropActive, setDropActive] = useState(false);
   const [addedContextToast, setAddedContextToast] = useState(null);
+  const [uploadedImages, setUploadedImages] = useState([]);
   const textareaRef = useRef(null);
   const mentionsRef = useRef(null);
   const inputContainerRef = useRef(null);
+  const fileInputRef = useRef(null);
 
   console.log(
     "Available context groups:",
@@ -53,9 +55,10 @@ export default function ChatInput({
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (message.trim()) {
-      onSendMessage(message.trim());
+    if (message.trim() || uploadedImages.length > 0) {
+      onSendMessage(message.trim(), uploadedImages);
       setMessage("");
+      setUploadedImages([]);
       if (textareaRef.current) {
         textareaRef.current.style.height = "auto";
       }
@@ -248,6 +251,38 @@ export default function ChatInput({
   );
   console.log("Show mentions:", showMentions);
 
+  // Handle image upload
+  const handleImageClick = () => {
+    fileInputRef.current.click();
+  };
+
+  const handleImageUpload = (e) => {
+    const files = Array.from(e.target.files);
+
+    // Process each file
+    const newImages = files.map((file) => ({
+      file,
+      url: URL.createObjectURL(file),
+      name: file.name,
+      size: file.size,
+    }));
+
+    setUploadedImages((prev) => [...prev, ...newImages]);
+
+    // Reset file input
+    e.target.value = null;
+  };
+
+  const handleRemoveImage = (index) => {
+    setUploadedImages((prev) => {
+      const newImages = [...prev];
+      // Revoke object URL to prevent memory leaks
+      URL.revokeObjectURL(newImages[index].url);
+      newImages.splice(index, 1);
+      return newImages;
+    });
+  };
+
   return (
     <div className="w-full space-y-2">
       {/* Added context toast notification */}
@@ -257,6 +292,25 @@ export default function ChatInput({
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
           </svg>
           Contexto añadido: {addedContextToast}
+        </div>
+      )}
+
+      {/* Image Previews */}
+      {uploadedImages.length > 0 && (
+        <div className="flex flex-wrap gap-2 mt-2 mb-2">
+          {uploadedImages.map((img, idx) => (
+            <div key={idx} className="relative group">
+              <div className="h-16 w-16 rounded overflow-hidden border border-gray-200">
+                <img src={img.url} alt={`Uploaded ${idx}`} className="h-full w-full object-cover" />
+              </div>
+              <button
+                onClick={() => handleRemoveImage(idx)}
+                className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 shadow-md opacity-90 hover:opacity-100"
+              >
+                <FiX size={14} />
+              </button>
+            </div>
+          ))}
         </div>
       )}
 
@@ -285,6 +339,24 @@ export default function ChatInput({
             <FiPlusCircle className="h-5 w-5" />
           </button>
 
+          {/* Image upload button */}
+          <button
+            type="button"
+            onClick={handleImageClick}
+            className="mr-2 flex-none z-10 flex h-8 w-8 items-center justify-center rounded-full text-[#666666] hover:bg-[#f0f0f0]"
+            title="Subir imagen"
+          >
+            <FiImage className="h-5 w-5" />
+          </button>
+          <input
+            type="file"
+            ref={fileInputRef}
+            onChange={handleImageUpload}
+            className="hidden"
+            accept="image/*"
+            multiple
+          />
+
           {/* Drop zone indicator overlay */}
           {dropActive && (
             <div className="absolute inset-0 flex items-center justify-center rounded-lg bg-blue-50 bg-opacity-80 z-10">
@@ -309,9 +381,9 @@ export default function ChatInput({
 
           <button
             type="submit"
-            disabled={disabled || !message.trim()}
+            disabled={disabled || (!message.trim() && uploadedImages.length === 0)}
             className={`ml-2 flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full transition-all ${
-              message.trim() && !disabled
+              (message.trim() || uploadedImages.length > 0) && !disabled
                 ? "bg-gradient-to-r from-blue-500 to-indigo-600 text-white hover:opacity-90"
                 : "bg-[#f0f0f0] text-[#999999]"
             }`}

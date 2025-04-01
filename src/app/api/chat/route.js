@@ -15,7 +15,14 @@ const MIN_TOKENS = 1;
 
 // Validar solicitud para chat
 function validateChatRequest(req) {
-  const { messages, temperature = 0.7, model = "gemini-2.0-flash", functions = [], contextGroups = [] } = req;
+  const {
+    messages,
+    temperature = 0.7,
+    model = "gemini-2.0-flash",
+    functions = [],
+    contextGroups = [],
+    images = [],
+  } = req;
 
   if (!messages || !Array.isArray(messages) || messages.length === 0) {
     return { valid: false, error: "Se requiere al menos un mensaje" };
@@ -26,7 +33,7 @@ function validateChatRequest(req) {
     return { valid: false, error: "La temperatura debe estar entre 0 y 1" };
   }
 
-  return { valid: true, messages, temperature, model, functions, contextGroups };
+  return { valid: true, messages, temperature, model, functions, contextGroups, images };
 }
 
 /**
@@ -86,22 +93,66 @@ export async function POST(request) {
     // Obtener y validar los datos del cuerpo de la solicitud
     const requestData = await request.json();
 
-    const { valid, error, messages, temperature, model, functions, contextGroups } = validateChatRequest(requestData);
+    const { valid, error, messages, temperature, model, functions, contextGroups, images } =
+      validateChatRequest(requestData);
 
     if (!valid) {
       console.error("Solicitud inválida:", error);
       return NextResponse.json({ error }, { status: 400 });
     }
 
-    console.log(`Chat API received ${messages.length} messages and ${contextGroups?.length || 0} context groups`);
+    console.log(
+      `Chat API received ${messages.length} messages, ${contextGroups?.length || 0} context groups, and ${
+        images?.length || 0
+      } images`
+    );
 
-    if (contextGroups && contextGroups.length > 0) {
-      console.log("Context group names:", contextGroups.map((g) => g.name).join(", "));
+    // Process images if they exist
+    let processedMessages = [...messages];
+    if (images && images.length > 0) {
+      console.log(`Processing ${images.length} images`);
 
-      // Log first few chars of each message to check content
-      messages.forEach((msg, i) => {
-        console.log(`Message ${i} (${msg.role}) first 200 chars:`, msg.content.substring(0, 200));
-      });
+      // Find the last user message to attach images to
+      const lastUserMessageIndex = processedMessages.findLastIndex((msg) => msg.role === "user");
+
+      if (lastUserMessageIndex !== -1) {
+        // Convert the message to the OpenAI format with content array
+        const lastUserMessage = processedMessages[lastUserMessageIndex];
+        const newUserMessage = {
+          role: "user",
+          content: [],
+        };
+
+        // Add the text content first
+        if (lastUserMessage.content) {
+          newUserMessage.content.push({
+            type: "text",
+            text: lastUserMessage.content,
+          });
+        }
+
+        // Add each image
+        for (const imageData of images) {
+          try {
+            // Convert image data to base64 (assuming imageData.file is already a base64 string)
+            const base64Image = imageData.base64 || imageData.data;
+
+            if (base64Image) {
+              newUserMessage.content.push({
+                type: "image_url",
+                image_url: {
+                  url: `data:image/jpeg;base64,${base64Image}`,
+                },
+              });
+            }
+          } catch (err) {
+            console.error("Error processing image:", err);
+          }
+        }
+
+        // Replace the original message with the new one containing images
+        processedMessages[lastUserMessageIndex] = newUserMessage;
+      }
     }
 
     // Crear herramientas desde las funciones
@@ -114,14 +165,14 @@ export async function POST(request) {
     const useMarkdown = requestData.useMarkdown !== false; // Por defecto es true
     const useThinking = requestData.useThinking !== false; // Por defecto es true
 
-    // Procesar la interacción de chat con manejo de herramientas
+    // Use processed messages with images for the chat interaction
     const stream = await handleChatInteraction({
       client: openAIClient,
-      messages,
+      messages: processedMessages,
       contextGroups,
       tools,
       toolMap,
-      model,
+      model: model, // Use vision model if images are present
       useMarkdown,
       useThinking,
       debug: false,
