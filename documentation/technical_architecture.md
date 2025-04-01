@@ -191,42 +191,43 @@ YTMind follows a modern web application architecture with the following componen
   },
   analysis: {
     topics: [String], // Topics covered in the video
-    thumbnailAnalysis: {
+     thumbnailAnalysis: {
       summary: String, // General descriptive summary
       elements: {
-        visual_composition: {
-          focus_point: String,
-          contrast_quality: String,
-          composition_type: String
+        visual_style: {
+          color_scheme: String, // bright / muted / neon / pastel / high-contrast
+          lighting_mood: String, // cinematic / flat / dramatic / vibrant / dark / surreal
+          visual_effects: [String], // glow / cutouts / drop shadow / motion blur / grain / collage
+          design_consistency: String, // templated / freestyle / branded elements / recurring layout
+          general_style: String // true crime thriller / motivational storytelling / comedic commentary / cinematic vlog
         },
-        color_strategy: {
-          primary_colors: [String],
-          color_harmony: String,
-          brightness_score: Number
-        },
-        text_elements: {
-          word_count: Number,
-          font_style: String
+        composition: {
+          subject_focus: String, // facial close-up / object-centric / symbolic / abstract / text-heavy
+          composition_style: String, // centered subject / rule of thirds / zoomed-in / layered / asymmetrical
+          focus_point: String, // Specific area drawing immediate attention
+          contrast_quality: String // How effectively contrast is used
         },
         faces: {
           present: Boolean,
           count: Number,
-          expressions: [String]
+          expression_style: String, // exaggerated / intense / emotional / neutral / shocked
+          expressions: [String] // Specific expressions identified
         },
-        psychological_triggers: {
-          curiosity_gap: String,
-          emotional_appeal: String,
-          urgency_elements: String
+        text_elements: {
+          text_style: String, // big bold text / minimal text / handwritten / cinematic / outlined
+          word_count: Number,
+          font_style: String // Specific font characteristics
         },
-        artistic_style: {
-          style_type: String, // realista, cartoon, pintura, 3D, etc.
-          lighting_style: String,
-          visual_mood: String // oscuro, luminoso, enérgico, etc.
+        psychological_elements: {
+          emotional_tone: String, // epic / mysterious / funny / intense / wholesome / inspirational
+          thumbnail_strategy: String, // curiosity gap / shock value / emotional storytelling / visual metaphor / aesthetic intrigue
+          curiosity_gap: String, // How the thumbnail creates curiosity
+          emotional_appeal: String // Specific emotional triggers used
         },
         thumbnail_title_synergy: {
-          complementary_elements: String, // cómo se complementan
-          curiosity_balance: String, // cómo distribuyen la curiosidad entre título y miniatura
-          redundancy_assessment: String // si repiten información o la distribuyen bien
+          complementary_elements: String, // How thumbnail and title work together
+          curiosity_balance: String, // How curiosity is distributed between thumbnail and title
+          redundancy_assessment: String // Whether information is effectively distributed
         }
       }
     },
@@ -257,54 +258,50 @@ YTMind follows a modern web application architecture with the following componen
     scriptAnalysis: {
       summary: String, // General analysis of the script
       elements: {
+        narrative_style: {
+          tone_of_voice: String, // casual / dramatic / inspirational / comedic / informative / sarcastic / emotional
+          narrative_structure: String, // linear / non-linear / mystery reveal / chronological / flashbacks / cliffhangers
+          pacing: String, // fast-paced / slow-burn / punchy / rhythmic
+          emotional_tone: String, // optimistic / tense / dramatic / hopeful / humorous / dark / uplifting
+          general_style: String // motivational documentary / true crime storytelling / YouTube essayist / inspirational short film
+        },
         hooks: {
           intro_hook: {
-            hook_type: String, // curiosity loop, problem-solution, impactful statement, personal story
-            effectiveness: String, // How well the hook works
-            timing: String // When the hook appears (seconds into video)
+            hook_style: String, // question / shocking fact / emotional statement / cinematic build-up / dialogue snippet
+            effectiveness: String,
+            timing: String
           },
-          narrative_hooks: [String], // Additional hooks used throughout the video to maintain interest
-          pattern_hooks: String // Recurring hook structures or patterns used
+          narrative_hooks: [String], // Additional hooks throughout the video
+          pattern_hooks: String // Recurring hook patterns
         },
         storytelling: {
           story_structure: String, // Modern Narrative Arc, CART, etc.
           moment_of_change: String, // The 5-second moment or transformation
-          narrative_techniques: [String], // Backpacks, Crystal Balls, Camouflage Bombs, etc.
+          narrative_devices: [String], // repetition, analogies, metaphors, irony, open loops, suspense
           emotional_elements: [String] // Types of emotions evoked
         },
-        script_structure: {
-          intro_quality: String, // Assessment of the introduction
-          body_organization: String, // How well the main content is structured
-          outro_effectiveness: String, // Assessment of the conclusion
-          transitions: String // How well sections connect
-        },
-        call_to_actions: {
-          types: [String], // Types of CTAs (subscribe, like, comment, visit website, etc.)
-          placement: [String], // Where CTAs appear in the video (intro, middle, outro)
-          delivery_style: String, // How CTAs are presented (direct, subtle, with incentive, etc.)
-          frequency: Number // How many CTAs are used in the video
-        },
-        psychological_elements: {
-          tension_resolution: String, // How tension is built and resolved
-          stakes: String, // What's at risk in the content
-          expectation_management: String // How expectations are set and met
-        },
-        delivery: {
-          pacing: String, // Speed and rhythm of content delivery
-          clarity: String, // How clearly information is presented
-          engagement_techniques: [String] // Specific techniques to maintain engagement
-        },
-        writing_style: {
-          tone: String, // Formal, conversational, educational, enthusiastic, etc.
-          vocabulary_level: String, // Simple, advanced, technical, etc.
-          sentence_structure: String, // Short and punchy, complex, varied, etc.
-          rhetorical_devices: [String] // Metaphors, analogies, repetition, etc.
+        language_elements: {
+          point_of_view: String, // first-person / second-person / third-person / omniscient
+          sentence_style: String, // short & snappy / long & descriptive / rhetorical / casual / poetic
+          language_style: String, // simple / technical / poetic / edgy / motivational / street-smart
+          common_devices: [String] // Specific language devices used
         },
         audience_approach: {
-          address_style: String, // Direct ("you"), inclusive ("we"), third-person, etc.
-          assumed_knowledge: String, // What knowledge level is assumed of the audience
-          audience_relationship: String, // How the creator positions themselves relative to audience (expert, peer, guide)
-          persuasion_techniques: [String] // Specific techniques used to persuade the audience
+          addressing_style: String, // directly addressing viewer / narration without reference / conversational / character-based
+          assumed_knowledge: String, // What knowledge level is assumed
+          audience_relationship: String, // How creator positions themselves
+          persuasion_techniques: [String]
+        },
+        visual_elements: {
+          visual_cues: [String], // transitions, visual metaphors, on-screen text, cut timing
+          visual_pacing: String, // How visual elements are timed
+          visual_storytelling: String // How visuals support the narrative
+        },
+        call_to_actions: {
+          types: [String],
+          placement: [String],
+          delivery_style: String,
+          frequency: Number
         }
       }
     }
